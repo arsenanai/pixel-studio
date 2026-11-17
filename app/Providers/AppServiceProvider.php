@@ -7,8 +7,11 @@ namespace App\Providers;
 use App\Services\Pixelforge\HttpPixelforgeClient;
 use App\Services\Pixelforge\PixelforgeClient;
 use App\Services\Pixelforge\PixelforgePricing;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -30,5 +33,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Lazy loading, unknown attributes and unfillable writes fail loudly outside production.
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        RateLimiter::for('quotes', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+        RateLimiter::for('generations', fn (Request $request) => Limit::perMinute(10)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
     }
 }

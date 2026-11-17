@@ -14,13 +14,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
-beforeEach(function () {
-    config([
-        'services.pixelforge.base_url' => 'https://pixelforge.test/v1',
-        'services.pixelforge.api_key' => 'pf_test_key',
-    ]);
-});
-
 function client(): PixelforgeClient
 {
     return app(PixelforgeClient::class);

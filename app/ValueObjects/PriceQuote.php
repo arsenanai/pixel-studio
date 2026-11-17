@@ -67,6 +67,7 @@ final readonly class PriceQuote implements JsonSerializable
      * @return array{
      *     lines: list<QuoteLine>,
      *     providerCost: array{min: Money, typical: Money, max: Money},
+     *     markup: array{min: Money, typical: Money, max: Money},
      *     charge: array{min: Money, typical: Money, max: Money},
      *     markupPercent: int|float,
      * }
@@ -79,6 +80,11 @@ final readonly class PriceQuote implements JsonSerializable
                 'min' => $this->minProviderCost,
                 'typical' => $this->typicalProviderCost,
                 'max' => $this->maxProviderCost,
+            ],
+            'markup' => [
+                'min' => $this->minCharge->subtract($this->minProviderCost),
+                'typical' => $this->typicalCharge->subtract($this->typicalProviderCost),
+                'max' => $this->maxCharge->subtract($this->maxProviderCost),
             ],
             'charge' => [
                 'min' => $this->minCharge,

@@ -30,6 +30,10 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected $attributes = [
+        'is_admin' => false,
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',

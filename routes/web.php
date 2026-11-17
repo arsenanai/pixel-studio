@@ -1,22 +1,21 @@
 <?php
 
+use App\Http\Controllers\GenerateController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\QuoteController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+Route::redirect('/', '/generate');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/generate', [GenerateController::class, 'create'])->name('generate');
+    Route::post('/generations', [GenerateController::class, 'store'])
+        ->middleware('throttle:generations')
+        ->name('generations.store');
+    Route::post('/quote', QuoteController::class)
+        ->middleware('throttle:quotes')
+        ->name('quote');
 });
-
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

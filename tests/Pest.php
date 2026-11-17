@@ -4,6 +4,7 @@ use App\Data\Pixelforge\Payload;
 use App\Data\Pixelforge\PixelforgeGeneration;
 use App\Services\Pixelforge\PixelforgePricing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)
@@ -44,4 +45,12 @@ function pixelforgeGeneration(string $fixture, array $overrides = []): Pixelforg
     return PixelforgeGeneration::fromPayload(
         Payload::of(pixelforgePayload($fixture, $overrides)),
     );
+}
+
+/** Serves the documented pricing for quotes. */
+function fakePricing(): void
+{
+    Http::fake([
+        'pixelforge.test/v1/pricing' => Http::response(pixelforgeFixture('pricing')),
+    ]);
 }
