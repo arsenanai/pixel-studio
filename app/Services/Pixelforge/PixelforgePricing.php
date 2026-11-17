@@ -46,7 +46,7 @@ final readonly class PixelforgePricing
         }
 
         return new self(
-            rates: TokenRates::fromUsdStrings($payload->stringMap('rates')),
+            rates: $payload->tokenRates('rates'),
             charactersPerTextToken: $tokens->int('characters_per_text_token'),
             // A ratio like 0.15, not money; whole basis points keep the maths in integers.
             textTokenVarianceBasisPoints: (int) round($tokens->number('text_token_variance') * 10_000),

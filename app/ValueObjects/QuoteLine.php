@@ -18,7 +18,7 @@ final readonly class QuoteLine implements JsonSerializable
         public Money $maxCost,
     ) {}
 
-    /** @return array<string, mixed> */
+    /** @return array{type: string, label: string, tokens: array{min: int, max: int}, ratePerMillion: Money, cost: array{min: Money, max: Money}} */
     public function jsonSerialize(): array
     {
         return [

@@ -4,7 +4,15 @@ declare(strict_types=1);
 
 namespace App\Data\Pixelforge;
 
+use App\Enums\TokenType;
 use App\Exceptions\InvalidPixelforgePayload;
+use App\ValueObjects\Money;
+use App\ValueObjects\TokenRates;
+use App\ValueObjects\TokenUsage;
+use BackedEnum;
+use Carbon\CarbonImmutable;
+use Carbon\Exceptions\InvalidFormatException;
+use InvalidArgumentException;
 use JsonException;
 
 /**
@@ -73,6 +81,65 @@ final readonly class Payload
         return $this->has($key) ? $this->int($key) : null;
     }
 
+    /**
+     * @template T of BackedEnum
+     *
+     * @param  class-string<T>  $enum
+     * @return T
+     */
+    public function enum(string $key, string $enum): BackedEnum
+    {
+        return $enum::tryFrom($this->string($key))
+            ?? throw InvalidPixelforgePayload::at($this->pathTo($key), 'a known '.class_basename($enum));
+    }
+
+    public function timestamp(string $key): CarbonImmutable
+    {
+        try {
+            return CarbonImmutable::parse($this->string($key))->utc();
+        } catch (InvalidFormatException) {
+            throw InvalidPixelforgePayload::at($this->pathTo($key), 'an ISO 8601 timestamp');
+        }
+    }
+
+    public function nullableTimestamp(string $key): ?CarbonImmutable
+    {
+        return $this->has($key) ? $this->timestamp($key) : null;
+    }
+
+    public function usd(string $key): Money
+    {
+        try {
+            return Money::fromUsdString($this->string($key));
+        } catch (InvalidArgumentException) {
+            throw InvalidPixelforgePayload::at($this->pathTo($key), 'an exact USD decimal string');
+        }
+    }
+
+    /** Reads the four token counts Pixelforge uses in `usage` objects and usage reports. */
+    public function tokenUsage(): TokenUsage
+    {
+        try {
+            return new TokenUsage(
+                $this->int(TokenType::InputText->value),
+                $this->int(TokenType::InputImage->value),
+                $this->int(TokenType::Output->value),
+                $this->int(TokenType::Reasoning->value),
+            );
+        } catch (InvalidArgumentException) {
+            throw InvalidPixelforgePayload::at($this->path, 'non-negative token counts');
+        }
+    }
+
+    public function tokenRates(string $key): TokenRates
+    {
+        try {
+            return TokenRates::fromUsdStrings($this->stringMap($key));
+        } catch (InvalidArgumentException) {
+            throw InvalidPixelforgePayload::at($this->pathTo($key), 'four exact USD rate strings');
+        }
+    }
+
     /** For dimensionless ratios only; money is always a decimal string. */
     public function number(string $key): int|float
     {
@@ -115,6 +182,24 @@ final readonly class Payload
         }
 
         return $strings;
+    }
+
+    /** @return list<self> */
+    public function objectList(string $key): array
+    {
+        $value = $this->data[$key] ?? null;
+
+        if (! is_array($value) || ! array_is_list($value)) {
+            throw InvalidPixelforgePayload::at($this->pathTo($key), 'a list of objects');
+        }
+
+        $objects = [];
+
+        foreach ($value as $index => $item) {
+            $objects[] = self::of($item, "{$this->pathTo($key)}.{$index}");
+        }
+
+        return $objects;
     }
 
     /** @return array<string, string> */

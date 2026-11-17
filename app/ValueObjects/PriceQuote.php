@@ -63,7 +63,14 @@ final readonly class PriceQuote implements JsonSerializable
         );
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array{
+     *     lines: list<QuoteLine>,
+     *     providerCost: array{min: Money, typical: Money, max: Money},
+     *     charge: array{min: Money, typical: Money, max: Money},
+     *     markupPercent: int|float,
+     * }
+     */
     public function jsonSerialize(): array
     {
         return [

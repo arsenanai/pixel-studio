@@ -25,3 +25,14 @@ function pricing(): PixelforgePricing
 {
     return PixelforgePricing::fromPayload(Payload::fromJson(pixelforgeFixture('pricing')));
 }
+
+/**
+ * A fixture decoded to an array, with fields replaced for the case under test.
+ *
+ * @param  array<string, mixed>  $overrides
+ * @return array<string, mixed>
+ */
+function pixelforgePayload(string $name, array $overrides = []): array
+{
+    return array_replace_recursive(json_decode(pixelforgeFixture($name), true), $overrides);
+}
