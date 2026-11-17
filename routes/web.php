@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\SpendReportController;
 use App\Http\Controllers\GenerateController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
@@ -17,6 +18,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/quote', QuoteController::class)
         ->middleware('throttle:quotes')
         ->name('quote');
+});
+
+Route::middleware(['auth', 'verified', 'can:view-spend-report'])->group(function () {
+    Route::get('/admin', SpendReportController::class)->name('admin.report');
 });
 
 Route::middleware('auth')->group(function () {

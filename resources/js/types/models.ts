@@ -76,3 +76,37 @@ export interface Paginated<T> {
         total: number;
     };
 }
+
+export interface SpendTotals {
+    succeeded: number;
+    failed: number;
+    charged: Money;
+    providerCost: Money;
+    profit: Money;
+    margin: string | null;
+}
+
+export interface ReportUser {
+    id: number;
+    name: string;
+    email: string;
+}
+
+export interface ReconciledDay {
+    date: string;
+    ourGenerations: number;
+    theirGenerations: number;
+    ourCost: Money;
+    theirCost: Money;
+    difference: Money;
+    matches: boolean;
+}
+
+export type Reconciliation =
+    | { available: false; days: []; mismatches: 0 }
+    | {
+          available: true;
+          checkedDays: number;
+          mismatches: number;
+          days: ReconciledDay[];
+      };

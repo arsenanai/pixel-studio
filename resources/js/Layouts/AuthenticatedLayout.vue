@@ -13,6 +13,9 @@ const showingNavigationDropdown = ref(false);
 const links = computed(() => [
     { label: 'Generate', name: 'generate' },
     { label: 'History', name: 'history' },
+    ...(page.props.auth.user.isAdmin
+        ? [{ label: 'Spend report', name: 'admin.report' }]
+        : []),
 ]);
 </script>
 
