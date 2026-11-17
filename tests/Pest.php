@@ -1,6 +1,7 @@
 <?php
 
 use App\Data\Pixelforge\Payload;
+use App\Data\Pixelforge\PixelforgeGeneration;
 use App\Services\Pixelforge\PixelforgePricing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -35,4 +36,12 @@ function pricing(): PixelforgePricing
 function pixelforgePayload(string $name, array $overrides = []): array
 {
     return array_replace_recursive(json_decode(pixelforgeFixture($name), true), $overrides);
+}
+
+/** @param array<string, mixed> $overrides */
+function pixelforgeGeneration(string $fixture, array $overrides = []): PixelforgeGeneration
+{
+    return PixelforgeGeneration::fromPayload(
+        Payload::of(pixelforgePayload($fixture, $overrides)),
+    );
 }

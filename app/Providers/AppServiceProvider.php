@@ -8,6 +8,7 @@ use App\Services\Pixelforge\HttpPixelforgeClient;
 use App\Services\Pixelforge\PixelforgeClient;
 use App\Services\Pixelforge\PixelforgePricing;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,5 +27,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Lazy loading, unknown attributes and unfillable writes fail loudly outside production.
+        Model::shouldBeStrict(! $this->app->isProduction());
     }
 }

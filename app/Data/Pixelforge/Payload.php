@@ -205,24 +205,28 @@ final readonly class Payload
     /** @return array<string, string> */
     public function stringMap(string $key): array
     {
+        return $this->object($key)->strings();
+    }
+
+    /**
+     * This object read as a map of string values.
+     *
+     * @return array<string, string>
+     */
+    public function strings(): array
+    {
         $map = [];
 
-        foreach ($this->object($key)->data as $mapKey => $item) {
+        foreach ($this->data as $key => $item) {
             if (! is_string($item)) {
-                throw InvalidPixelforgePayload::at($this->pathTo($key).'.'.$mapKey, 'a string');
+                throw InvalidPixelforgePayload::at($this->pathTo((string) $key), 'a string');
             }
 
             // json_decode turns numeric object keys into ints.
-            $map[(string) $mapKey] = $item;
+            $map[(string) $key] = $item;
         }
 
         return $map;
-    }
-
-    /** @return array<array-key, mixed> */
-    public function toArray(): array
-    {
-        return $this->data;
     }
 
     private function pathTo(string $key): string
