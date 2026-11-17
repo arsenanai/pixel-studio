@@ -9,10 +9,6 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
-/**
- * Users only. Generations must come from real Pixelforge calls, or the admin
- * report could not reconcile against GET /v1/usage.
- */
 class DatabaseSeeder extends Seeder
 {
     public function run(): void

@@ -11,7 +11,6 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
 
-/** Raw JSON of a Pixelforge response, copied verbatim from the API docs. */
 function pixelforgeFixture(string $name): string
 {
     $contents = file_get_contents(__DIR__."/Fixtures/Pixelforge/{$name}.json");
@@ -29,8 +28,6 @@ function pricing(): PixelforgePricing
 }
 
 /**
- * A fixture decoded to an array, with fields replaced for the case under test.
- *
  * @param  array<string, mixed>  $overrides
  * @return array<string, mixed>
  */
@@ -47,7 +44,6 @@ function pixelforgeGeneration(string $fixture, array $overrides = []): Pixelforg
     );
 }
 
-/** Serves the documented pricing for quotes. */
 function fakePricing(): void
 {
     Http::fake([

@@ -12,7 +12,6 @@ use App\ValueObjects\TokenRates;
 use App\ValueObjects\TokenUsage;
 use Carbon\CarbonImmutable;
 
-/** A generation object as Pixelforge returns it from the API and in webhooks. */
 final readonly class PixelforgeGeneration
 {
     /**
@@ -61,8 +60,6 @@ final readonly class PixelforgeGeneration
             completedAt: $payload->nullableTimestamp('completed_at'),
         );
 
-        // A finished generation we cannot price or explain is worse than no update:
-        // reject it here, and let a later webhook or poll bring a complete one.
         if ($generation->status === GenerationStatus::Succeeded
             && ($generation->usage === null || $generation->rates === null || $generation->completedAt === null)) {
             throw InvalidPixelforgePayload::at('$', 'a succeeded generation with usage, rates and completed_at');

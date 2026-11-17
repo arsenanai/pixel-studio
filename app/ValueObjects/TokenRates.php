@@ -8,7 +8,6 @@ use App\Enums\TokenType;
 use InvalidArgumentException;
 use UnexpectedValueException;
 
-/** Prices per 1M tokens, as Pixelforge publishes them and snapshots them on each generation. */
 final readonly class TokenRates
 {
     private const TOKENS_PER_RATE = 1_000_000;
@@ -20,7 +19,7 @@ final readonly class TokenRates
         public Money $reasoning,
     ) {}
 
-    /** @param array<string, string> $rates keyed like Pixelforge's `rates` object */
+    /** @param array<string, string> $rates */
     public static function fromUsdStrings(array $rates): self
     {
         $rate = static function (TokenType $type) use ($rates): Money {
@@ -77,8 +76,6 @@ final readonly class TokenRates
         return $rates;
     }
 
-    // Pixelforge bills exact nine-decimal amounts. If a rate ever made a cost land
-    // between two nanodollars, rounding here would silently drift from /v1/usage.
     private function exact(int $numerator): Money
     {
         if ($numerator % self::TOKENS_PER_RATE !== 0) {

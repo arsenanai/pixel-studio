@@ -13,7 +13,6 @@ const model = defineModel<string>({ required: true });
 <template>
     <fieldset>
         <legend class="text-sm font-medium text-gray-900">{{ legend }}</legend>
-        <!-- Native radios: arrow keys, focus and screen readers work for free. -->
         <div class="mt-2 grid grid-cols-3 gap-2">
             <label
                 v-for="option in options"

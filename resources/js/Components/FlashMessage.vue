@@ -5,7 +5,6 @@ import { onBeforeUnmount, ref, watch } from 'vue';
 const page = usePage();
 const dismissed = ref(false);
 
-// A new flash after a later visit shows again even if the last one was closed.
 const stop = router.on('success', () => {
     dismissed.value = false;
 });

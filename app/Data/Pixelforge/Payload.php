@@ -15,10 +15,6 @@ use Carbon\Exceptions\InvalidFormatException;
 use InvalidArgumentException;
 use JsonException;
 
-/**
- * Typed reads over decoded Pixelforge JSON. This is the only class that touches
- * `mixed`; everything it returns is checked, and a wrong shape names its path.
- */
 final readonly class Payload
 {
     /** @param array<array-key, mixed> $data */
@@ -116,7 +112,6 @@ final readonly class Payload
         }
     }
 
-    /** Reads the four token counts Pixelforge uses in `usage` objects and usage reports. */
     public function tokenUsage(): TokenUsage
     {
         try {
@@ -140,7 +135,6 @@ final readonly class Payload
         }
     }
 
-    /** For dimensionless ratios only; money is always a decimal string. */
     public function number(string $key): int|float
     {
         $value = $this->data[$key] ?? null;
@@ -208,11 +202,7 @@ final readonly class Payload
         return $this->object($key)->strings();
     }
 
-    /**
-     * This object read as a map of string values.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     public function strings(): array
     {
         $map = [];
@@ -222,7 +212,6 @@ final readonly class Payload
                 throw InvalidPixelforgePayload::at($this->pathTo((string) $key), 'a string');
             }
 
-            // json_decode turns numeric object keys into ints.
             $map[(string) $key] = $item;
         }
 

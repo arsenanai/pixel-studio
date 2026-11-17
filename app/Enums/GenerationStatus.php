@@ -11,7 +11,6 @@ enum GenerationStatus: string
     case Succeeded = 'succeeded';
     case Failed = 'failed';
 
-    // Both outcomes share the top rank, so whichever terminal state lands first wins.
     public function rank(): int
     {
         return match ($this) {

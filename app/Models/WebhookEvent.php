@@ -9,9 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A webhook delivery we accepted. The unique provider_event_id is what stops a
- * redelivered event from being processed twice.
- *
  * @property int $id
  * @property string $provider_event_id
  * @property string $type

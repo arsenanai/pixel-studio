@@ -33,7 +33,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
-        // Lazy loading, unknown attributes and unfillable writes fail loudly outside production.
         Model::shouldBeStrict(! $this->app->isProduction());
 
         Gate::define('view-spend-report', fn (User $user): bool => $user->is_admin);

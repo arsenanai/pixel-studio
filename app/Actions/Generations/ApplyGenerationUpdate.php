@@ -18,10 +18,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use LogicException;
 
-/**
- * The only writer of a generation's status and cost. The webhook, the poller and
- * the submit job all go through here, in any order and any number of times.
- */
 final readonly class ApplyGenerationUpdate
 {
     public function __construct(
@@ -35,11 +31,9 @@ final readonly class ApplyGenerationUpdate
                 throw new LogicException("Generation [{$row->id}] belongs to [{$row->provider_job_id}], not [{$snapshot->id}].");
             }
 
-            // Correlation fields can arrive on any snapshot, including a stale one.
             $row->provider_job_id ??= $snapshot->id;
             $row->rates ??= $snapshot->rates;
 
-            // rank is monotonic, so a duplicate or stale snapshot changes nothing else.
             if ($snapshot->status->rank() <= $row->status->rank()) {
                 return;
             }
@@ -59,10 +53,6 @@ final readonly class ApplyGenerationUpdate
         });
     }
 
-    /**
-     * Fails a generation that Pixelforge never accepted, so there is nothing on
-     * its side to bill. Once it has a provider id only Pixelforge decides its outcome.
-     */
     public function failBeforeAcceptance(Generation $generation, string $code, string $message): Generation
     {
         return $this->locked($generation, function (Generation $row) use ($code, $message): void {
@@ -80,7 +70,6 @@ final readonly class ApplyGenerationUpdate
     private function locked(Generation $generation, Closure $apply): Generation
     {
         return DB::transaction(function () use ($generation, $apply): Generation {
-            // Serializes concurrent writers; whoever waits re-reads the new rank and no-ops.
             $row = Generation::query()->whereKey($generation->getKey())->lockForUpdate()->firstOrFail();
 
             $apply($row);
@@ -105,7 +94,6 @@ final readonly class ApplyGenerationUpdate
             throw InvalidPixelforgePayload::at('$', 'a succeeded generation with usage, rates and completed_at');
         }
 
-        // Billed at the rates Pixelforge fixed on this generation, never current pricing.
         $cost = $snapshot->rates->cost($snapshot->usage);
         $charge = $cost->withMarkup($this->markupBasisPoints);
 
@@ -122,7 +110,6 @@ final readonly class ApplyGenerationUpdate
         $row->started_at ??= $snapshot->startedAt;
         $row->completed_at = $snapshot->completedAt;
 
-        // Same transaction as the status change, and unique per generation.
         CreditTransaction::record($row->user_id, CreditTransactionType::Charge, Money::zero()->subtract($charge), $row->id);
 
         if ($charge->isGreaterThan($row->estimated_max_charge_nano)) {
@@ -134,8 +121,6 @@ final readonly class ApplyGenerationUpdate
         }
     }
 
-    // Failed generations are never billed by Pixelforge, so we never charge for them,
-    // and their hold on the user's credits ends with this status change.
     private function fail(Generation $row, string $code, string $message, ?CarbonImmutable $startedAt, CarbonImmutable $completedAt): void
     {
         $row->status = GenerationStatus::Failed;

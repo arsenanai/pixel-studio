@@ -16,12 +16,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * Defaults describe a medium 1024x1024 generation with a ~40 character prompt,
- * quoted at the published rates. States keep status, usage and cost consistent.
- *
- * @extends Factory<Generation>
- */
+/** @extends Factory<Generation> */
 class GenerationFactory extends Factory
 {
     public function definition(): array
@@ -33,7 +28,6 @@ class GenerationFactory extends Factory
             'quality' => ImageQuality::Medium,
             'reference_images' => [],
             'status' => GenerationStatus::Queued,
-            // 10 text tokens (8-12), 1,100 output tokens, 200-2,000 reasoning tokens.
             'estimated_provider_cost_nano' => Money::fromNano(57_800_000),
             'estimated_charge_nano' => Money::fromNano(72_250_000),
             'estimated_min_charge_nano' => Money::fromNano(58_175_000),
@@ -51,7 +45,6 @@ class GenerationFactory extends Factory
         ]);
     }
 
-    /** Accepted by Pixelforge: it has a provider id and a rate snapshot. */
     public function submitted(): static
     {
         return $this->state(fn () => [

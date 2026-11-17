@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('generations', function (Blueprint $table) {
-            // Ours, generated before Pixelforge is called, and sent as the Idempotency-Key.
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
@@ -20,7 +19,6 @@ return new class extends Migration
 
             $table->string('status', 10)->default('queued');
             $table->string('provider_job_id')->nullable()->unique();
-            // The rates this generation is billed at, fixed by Pixelforge when it was created.
             $table->json('rates')->nullable();
 
             $table->text('image_url')->nullable();
@@ -31,7 +29,6 @@ return new class extends Migration
             $table->unsignedInteger('usage_output_tokens')->nullable();
             $table->unsignedInteger('usage_reasoning_tokens')->nullable();
 
-            // All money is integer nanodollars (1e-9 USD).
             $table->bigInteger('estimated_provider_cost_nano');
             $table->bigInteger('estimated_charge_nano');
             $table->bigInteger('estimated_min_charge_nano');

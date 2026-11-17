@@ -14,17 +14,10 @@ use App\Services\Pixelforge\PixelforgeClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 
-/**
- * The safety net for webhooks that never arrive, and for submits that ran out
- * of retries. Everything it learns goes through ApplyGenerationUpdate, so it
- * can race the webhook freely.
- */
 final readonly class PollPendingGenerations
 {
-    /** Leave webhooks a moment to do the work before spending API calls on it. */
     private const QUIET_SECONDS = 30;
 
-    /** Pixelforge allows 60 requests a minute per account, shared with creates. */
     private const BATCH = 15;
 
     private const RESUBMIT_AFTER_MINUTES = 2;
@@ -61,11 +54,9 @@ final readonly class PollPendingGenerations
 
         foreach ($generations as $generation) {
             try {
-                // Fetched outside any transaction; the lock is only taken to apply.
                 $snapshot = $this->client->generation((string) $generation->provider_job_id);
             } catch (PixelforgeRequestFailed $failure) {
                 if ($failure->isRetryable()) {
-                    // Rate limited or overloaded: stop for this tick rather than make it worse.
                     break;
                 }
 
@@ -89,7 +80,6 @@ final readonly class PollPendingGenerations
 
             $applied = ($this->apply)($generation, $snapshot);
 
-            // Moves a still-running generation to the back of the line.
             if ($applied->updated_at->equalTo($generation->updated_at)) {
                 $applied->touch();
             }
@@ -126,7 +116,6 @@ final readonly class PollPendingGenerations
                 continue;
             }
 
-            // Same idempotency key as every earlier attempt, so this can never create a duplicate.
             SubmitGenerationJob::dispatch($generation);
             $resubmitted++;
         }

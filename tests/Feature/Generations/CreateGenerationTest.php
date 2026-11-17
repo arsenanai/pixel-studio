@@ -63,7 +63,6 @@ it('does not call Pixelforge while handling the form', function () {
 
     submitForm();
 
-    // Only the cached pricing lookup; the create call happens in the queued job.
     Http::assertSentCount(1);
 });
 

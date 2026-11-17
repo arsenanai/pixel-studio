@@ -7,7 +7,6 @@ namespace App\ValueObjects;
 use App\Enums\TokenType;
 use JsonSerializable;
 
-/** One row of the estimate breakdown, at provider cost (before markup). */
 final readonly class QuoteLine implements JsonSerializable
 {
     public function __construct(

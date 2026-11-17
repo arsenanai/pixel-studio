@@ -23,14 +23,11 @@ final readonly class CreateGeneration
      */
     public function __invoke(User $user, string $prompt, ImageSize $size, ImageQuality $quality, array $referenceImages): Generation
     {
-        // Re-quoted on the server; the browser's numbers are never trusted.
         $quote = ($this->quote)($prompt, $size, $quality, count($referenceImages));
 
         return DB::transaction(function () use ($user, $prompt, $size, $quality, $referenceImages, $quote): Generation {
-            // Serializes one user's submits, so two at once cannot both spend the same credits.
             $locked = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-            // Held at the maximum, so whatever it really costs is already covered.
             $available = $locked->availableCredits();
 
             if ($quote->maxCharge->isGreaterThan($available)) {
@@ -49,7 +46,6 @@ final readonly class CreateGeneration
             $generation->estimated_max_charge_nano = $quote->maxCharge;
             $generation->save();
 
-            // Dispatched after commit, so a webhook can never arrive for a row that does not exist yet.
             SubmitGenerationJob::dispatch($generation);
 
             return $generation;

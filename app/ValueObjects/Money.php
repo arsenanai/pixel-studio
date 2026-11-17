@@ -7,12 +7,6 @@ namespace App\ValueObjects;
 use InvalidArgumentException;
 use JsonSerializable;
 
-/**
- * An exact amount of US dollars, held as an integer number of nanodollars (1e-9 USD).
- *
- * Pixelforge publishes rates per 1M tokens and costs to nine decimal places, so
- * every per-token price and every provider cost is a whole number of nanodollars.
- */
 final readonly class Money implements JsonSerializable
 {
     public const NANO_PER_DOLLAR = 1_000_000_000;
@@ -24,7 +18,6 @@ final readonly class Money implements JsonSerializable
         return new self($nano);
     }
 
-    /** A BIGINT column or SUM() result; PDO may return it as a numeric string. */
     public static function fromDatabase(mixed $value): self
     {
         if (is_int($value)) {
@@ -43,7 +36,6 @@ final readonly class Money implements JsonSerializable
         return new self(0);
     }
 
-    // Parsed as digits: a float cannot hold "0.169080000" exactly.
     public static function fromUsdString(string $usd): self
     {
         if (preg_match('/^(\d{1,9})(?:\.(\d{1,9}))?$/', $usd, $matches) !== 1) {
@@ -65,7 +57,6 @@ final readonly class Money implements JsonSerializable
         return new self($this->nano - $other->nano);
     }
 
-    // ceil, so a markup on an odd nanodollar amount never undercharges.
     public function withMarkup(int $basisPoints): self
     {
         if ($this->nano < 0 || $basisPoints < 0) {
@@ -90,7 +81,6 @@ final readonly class Money implements JsonSerializable
         return $this->nano === 0;
     }
 
-    /** Exact decimal dollars with at least two places, e.g. "0.3818875", "5.00", "-0.01". */
     public function toDecimalString(): string
     {
         [$sign, $dollars, $fraction] = $this->parts();
@@ -98,7 +88,6 @@ final readonly class Money implements JsonSerializable
         return "{$sign}{$dollars}.{$fraction}";
     }
 
-    /** Exact, for people: "$0.3818875", "$1,250.00", "-$0.01". */
     public function format(): string
     {
         [$sign, $dollars, $fraction] = $this->parts();
@@ -109,7 +98,6 @@ final readonly class Money implements JsonSerializable
     /** @return array{nano: string, display: string} */
     public function jsonSerialize(): array
     {
-        // A string, because browser numbers lose precision above 2^53.
         return ['nano' => (string) $this->nano, 'display' => $this->format()];
     }
 

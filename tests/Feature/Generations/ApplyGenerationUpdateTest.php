@@ -103,12 +103,10 @@ it('charges nothing for a failed generation', function () {
 });
 
 it('bills at the rates fixed on the generation, not current pricing', function () {
-    // Pixelforge's rates halve after this generation was created; its snapshot keeps the old ones.
     $generation = apply(queuedGeneration(), 'generation-succeeded', [
         'rates' => ['output_tokens' => '80.00'],
     ]);
 
-    // 60,000 + 7,650,000 + 6,450 x 80,000 + 39,800,000
     expect($generation->provider_cost_nano?->nano)->toBe(563_510_000)
         ->and($generation->rates?->output->nano)->toBe(80_000_000_000);
 });

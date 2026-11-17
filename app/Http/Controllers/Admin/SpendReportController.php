@@ -30,10 +30,9 @@ final class SpendReportController
 
         return Inertia::render('Admin/Index', [
             'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
-            // /v1/usage is per API key, so say which one these numbers are checked against.
             'source' => [
                 'environment' => app()->environment(),
-                'keyHint' => $apiKey === '' ? null : '…'.substr($apiKey, -4),
+                'keyHint' => $apiKey === '' ? null : '...'.substr($apiKey, -4),
             ],
             'total' => $spend['total'],
             'days' => array_reverse(array_map(
@@ -42,7 +41,6 @@ final class SpendReportController
             )),
             'users' => $spend['users'],
             'dayUsers' => array_reverse($spend['dayUsers']),
-            // Loaded after the page renders, so a slow or down Pixelforge never blocks the report.
             'reconciliation' => Inertia::defer(fn () => $this->reconciliation($reconcile, $from, $to)),
         ]);
     }

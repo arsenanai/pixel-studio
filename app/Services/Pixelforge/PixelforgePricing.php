@@ -10,12 +10,11 @@ use App\Enums\ImageSize;
 use App\ValueObjects\TokenRange;
 use App\ValueObjects\TokenRates;
 
-/** The current rate card and token tables from GET /v1/pricing. */
 final readonly class PixelforgePricing
 {
     /**
-     * @param  array<string, array<string, int>>  $outputTokens  quality => size => tokens
-     * @param  array<string, TokenRange>  $reasoningTokens  quality => range
+     * @param  array<string, array<string, int>>  $outputTokens
+     * @param  array<string, TokenRange>  $reasoningTokens
      */
     public function __construct(
         public TokenRates $rates,
@@ -35,7 +34,6 @@ final readonly class PixelforgePricing
         $outputTokens = [];
         $reasoningTokens = [];
 
-        // Read every combination up front, so a lookup can never miss later.
         foreach (ImageQuality::cases() as $quality) {
             foreach (ImageSize::cases() as $size) {
                 $outputTokens[$quality->value][$size->value] = $output->object($quality->value)->int($size->value);
@@ -48,7 +46,6 @@ final readonly class PixelforgePricing
         return new self(
             rates: $payload->tokenRates('rates'),
             charactersPerTextToken: $tokens->int('characters_per_text_token'),
-            // A ratio like 0.15, not money; whole basis points keep the maths in integers.
             textTokenVarianceBasisPoints: (int) round($tokens->number('text_token_variance') * 10_000),
             tokensPerReferenceImage: $tokens->int('per_reference_image'),
             outputTokens: $outputTokens,

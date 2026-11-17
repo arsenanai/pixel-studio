@@ -24,7 +24,6 @@ final class QuoteController
 
         return response()->json([
             ...$price->jsonSerialize(),
-            // Decided here, so the browser never compares money itself.
             'credits' => [
                 'available' => $available,
                 'sufficient' => ! $price->maxCharge->isGreaterThan($available),

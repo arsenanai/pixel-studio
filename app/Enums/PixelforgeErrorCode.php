@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-/** Request-level error codes from the Pixelforge docs. */
 enum PixelforgeErrorCode: string
 {
     case InvalidApiKey = 'invalid_api_key';

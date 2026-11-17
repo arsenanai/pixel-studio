@@ -19,7 +19,7 @@ function client(): PixelforgeClient
     return app(PixelforgeClient::class);
 }
 
-function generationRequest(array $metadata = ['generation_id' => '9b1f…']): GenerationRequest
+function generationRequest(array $metadata = ['generation_id' => '0193a6c4-7f7e-7c2b-9e43-1f0b6f7d2a10']): GenerationRequest
 {
     return new GenerationRequest(
         idempotencyKey: '0193a6c4-7f7e-7c2b-9e43-1f0b6f7d2a10',
@@ -63,7 +63,7 @@ it('creates a generation with bearer auth, an idempotency key and only documente
             'size' => '1536x1024',
             'quality' => 'high',
             'reference_images' => ['https://example.com/style.png'],
-            'metadata' => ['generation_id' => '9b1f…'],
+            'metadata' => ['generation_id' => '0193a6c4-7f7e-7c2b-9e43-1f0b6f7d2a10'],
         ]);
 });
 

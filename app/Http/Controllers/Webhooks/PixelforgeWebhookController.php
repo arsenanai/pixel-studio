@@ -14,13 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Synchronous on purpose: one insert and one locked update is far inside the 10s
- * budget, and a queue here would need its own dedupe on top of the event id.
- *
- * 204 for handled and duplicate events, 400 for anything we must not trust,
- * and any 5xx from an exception so Pixelforge retries.
- */
 final class PixelforgeWebhookController
 {
     public function __invoke(Request $request, VerifyPixelforgeSignature $verify, HandlePixelforgeEvent $handle): Response
@@ -39,7 +32,6 @@ final class PixelforgeWebhookController
             return response($rejected->getMessage(), 400);
         }
 
-        // The body id is the one that was signed, so it is the dedupe key.
         if ($headerEventId !== null && $headerEventId !== $event->id) {
             Log::warning('pixelforge.webhook.event_id_mismatch', [...$context, 'body_event_id' => $event->id]);
         }

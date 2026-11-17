@@ -22,7 +22,6 @@ const form = useForm({
     reference_images: [] as string[],
 });
 
-// Code points, the way Pixelforge (and PHP's mb_strlen) count characters.
 const characters = computed(() => [...form.prompt].length);
 const overLimit = computed(
     () => characters.value > props.limits.promptMaxCharacters,
@@ -37,7 +36,6 @@ function isHttpUrl(value: string): boolean {
     }
 }
 
-// Half-typed URLs are left out of the price until they parse, rather than erroring on every keystroke.
 const { quote, state, error } = useQuote(() => ({
     prompt: form.prompt,
     size: form.size,

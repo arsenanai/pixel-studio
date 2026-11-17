@@ -19,7 +19,6 @@ function sign(string $body, ?int $timestamp = null, string $secret = SECRET): st
     return "t={$timestamp},v1=".hash_hmac('sha256', "{$timestamp}.{$body}", $secret);
 }
 
-/** POSTs exact bytes, as Pixelforge does, so the signature covers what the app reads. */
 function deliverRaw(string $body, ?string $signature, array $headers = []): TestResponse
 {
     $server = ['CONTENT_TYPE' => 'application/json'];
@@ -35,7 +34,6 @@ function deliverRaw(string $body, ?string $signature, array $headers = []): Test
     return test()->call('POST', '/api/pixelforge/webhook', server: $server, content: $body);
 }
 
-/** An event fixture, addressed to one of our generations through its metadata. */
 function eventFor(?Generation $generation, string $fixture, array $overrides = []): string
 {
     $payload = pixelforgePayload($fixture, $overrides);
@@ -237,10 +235,8 @@ describe('duplicates and ordering', function () {
         $generation = Generation::factory()->create();
 
         Http::fake(function () use ($generation) {
-            // Pixelforge finishes and calls back while our POST is still in flight...
             deliver(eventFor($generation, 'event-succeeded'))->assertNoContent();
 
-            // ...then the 202 for that POST, still saying queued, finally lands.
             return Http::response(
                 pixelforgePayload('generation-queued', ['metadata' => ['generation_id' => $generation->id]]),
                 202,

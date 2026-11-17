@@ -6,7 +6,6 @@ namespace App\Data\Pixelforge;
 
 use Carbon\CarbonImmutable;
 
-/** A webhook event. `generation` is null for events that carry none, such as `ping`. */
 final readonly class PixelforgeEvent
 {
     public const PING = 'ping';

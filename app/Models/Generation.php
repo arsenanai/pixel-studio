@@ -22,9 +22,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * One request to generate an image, and the financial record of what it cost.
- * Status and cost are written only by ApplyGenerationUpdate.
- *
  * @property string $id
  * @property int $user_id
  * @property string $prompt
@@ -61,7 +58,6 @@ class Generation extends Model
     /** @use HasFactory<GenerationFactory> */
     use HasFactory, HasUuids;
 
-    /** Our metadata key on the Pixelforge generation, so a webhook can find us before the create call returns. */
     public const METADATA_KEY = 'generation_id';
 
     protected $attributes = [
@@ -126,7 +122,6 @@ class Generation extends Model
         );
     }
 
-    /** Charge minus provider cost; derived so it can never drift from the two it comes from. */
     public function profit(): ?Money
     {
         if ($this->charge_nano === null || $this->provider_cost_nano === null) {
@@ -136,7 +131,6 @@ class Generation extends Model
         return $this->charge_nano->subtract($this->provider_cost_nano);
     }
 
-    /** Built from stored columns only, so every retry sends identical parameters. */
     public function toPixelforgeRequest(): GenerationRequest
     {
         return new GenerationRequest(

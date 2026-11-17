@@ -20,7 +20,6 @@ const pending = computed(
 </script>
 
 <template>
-    <!-- Never colour alone: the dot always sits next to its label. -->
     <span
         class="inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-gray-700"
     >

@@ -97,7 +97,6 @@ it('waits as long as Pixelforge asks when it is at capacity', function (string $
 })->with([
     'concurrency limit' => ['error-concurrency', 429, '5', 5],
     'rate limit' => ['error-rate-limit', 429, '30', 30],
-    // Never sooner than our own minimum backoff.
     'overloaded' => ['error-overloaded', 503, '2', 5],
 ]);
 

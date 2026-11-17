@@ -11,7 +11,6 @@ beforeEach(function () {
     CarbonImmutable::setTestNow('2026-11-17 12:00:00');
 });
 
-/** A /v1/usage response with the given nanodollar cost and count per day. */
 function usageReport(string $from, string $to, array $days): array
 {
     $rows = [];
@@ -64,7 +63,6 @@ it('totals charges, provider cost and profit per UTC completion day and per user
     $alice = User::factory()->create(['name' => 'Alice']);
     $bob = User::factory()->create(['name' => 'Bob']);
 
-    // Created on the 15th, finished just after midnight UTC: it belongs to the 16th.
     Generation::factory()->for($alice)->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-16 00:00:05'))
         ->create(['created_at' => CarbonImmutable::parse('2026-11-15 23:59:50')]);
     Generation::factory()->for($alice)->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-17 09:00:00'))->create();

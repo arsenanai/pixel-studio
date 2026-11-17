@@ -7,7 +7,6 @@ namespace App\Data\Pixelforge;
 use App\ValueObjects\Money;
 use App\ValueObjects\TokenUsage;
 
-/** What Pixelforge billed for generations that completed on one UTC day. */
 final readonly class PixelforgeUsageDay
 {
     public function __construct(

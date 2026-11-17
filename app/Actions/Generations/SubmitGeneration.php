@@ -12,7 +12,6 @@ use App\Models\Generation;
 use App\Services\Pixelforge\PixelforgeClient;
 use Illuminate\Support\Facades\Log;
 
-/** Sends a queued generation to Pixelforge. Safe to repeat: every attempt carries the same idempotency key. */
 final readonly class SubmitGeneration
 {
     public function __construct(
@@ -21,12 +20,11 @@ final readonly class SubmitGeneration
     ) {}
 
     /**
-     * @throws PixelforgeRequestFailed when Pixelforge asks us to try again later
-     * @throws PixelforgeUnreachable when we cannot tell whether the request arrived
+     * @throws PixelforgeRequestFailed
+     * @throws PixelforgeUnreachable
      */
     public function __invoke(Generation $generation): void
     {
-        // Already accepted: from here only webhooks and polling move it on.
         if ($generation->status !== GenerationStatus::Queued || $generation->provider_job_id !== null) {
             return;
         }
@@ -56,7 +54,6 @@ final readonly class SubmitGeneration
             return;
         }
 
-        // The response may already be processing or finished if this was a replay.
         ($this->apply)($generation, $snapshot);
     }
 
@@ -64,7 +61,7 @@ final readonly class SubmitGeneration
     {
         return match ($failure->errorCode) {
             PixelforgeErrorCode::ContentPolicyViolation => 'Pixelforge declined this prompt under its content policy.',
-            PixelforgeErrorCode::DailyLimitExceeded => 'Pixelforge’s daily generation limit has been reached. It resets at midnight UTC.',
+            PixelforgeErrorCode::DailyLimitExceeded => 'The daily Pixelforge generation limit has been reached. It resets at midnight UTC.',
             PixelforgeErrorCode::ValidationFailed => "Pixelforge rejected the request: {$failure->getMessage()}",
             default => 'Pixelforge could not accept this generation.',
         };

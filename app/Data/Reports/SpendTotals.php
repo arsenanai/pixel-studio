@@ -7,7 +7,6 @@ namespace App\Data\Reports;
 use App\ValueObjects\Money;
 use JsonSerializable;
 
-/** What users were charged and what Pixelforge charged us, for one slice of the report. */
 final readonly class SpendTotals implements JsonSerializable
 {
     public function __construct(
@@ -37,7 +36,6 @@ final readonly class SpendTotals implements JsonSerializable
         return $this->charged->subtract($this->providerCost);
     }
 
-    /** Profit as a share of revenue, e.g. "20.00%"; null when nothing was charged. */
     public function margin(): ?string
     {
         if ($this->charged->isZero()) {

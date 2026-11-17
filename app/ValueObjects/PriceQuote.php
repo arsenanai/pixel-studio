@@ -7,10 +7,6 @@ namespace App\ValueObjects;
 use App\Enums\TokenType;
 use JsonSerializable;
 
-/**
- * What a generation will cost before it runs: a guaranteed range plus a typical
- * value. Each bound is priced exactly like a finished generation would be.
- */
 final readonly class PriceQuote implements JsonSerializable
 {
     /** @param list<QuoteLine> $lines */
@@ -49,7 +45,6 @@ final readonly class PriceQuote implements JsonSerializable
         $typicalProviderCost = $rates->cost($typical);
         $maxProviderCost = $rates->cost($max);
 
-        // Marked up per bound, the same way a finished generation is charged.
         return new self(
             rates: $rates,
             markupBasisPoints: $markupBasisPoints,

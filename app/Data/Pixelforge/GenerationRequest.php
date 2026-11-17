@@ -7,11 +7,6 @@ namespace App\Data\Pixelforge;
 use App\Enums\ImageQuality;
 use App\Enums\ImageSize;
 
-/**
- * The body of POST /v1/generations. Pixelforge replays an idempotent request
- * only when the parameters are identical, so this is built once per generation
- * and sent unchanged on every retry.
- */
 final readonly class GenerationRequest
 {
     /**
@@ -35,7 +30,6 @@ final readonly class GenerationRequest
             'size' => $this->size->value,
             'quality' => $this->quality->value,
             'reference_images' => $this->referenceImages,
-            // An empty PHP array would encode as [], which is not an object.
             'metadata' => $this->metadata === [] ? (object) [] : $this->metadata,
         ];
     }

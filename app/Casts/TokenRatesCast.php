@@ -10,11 +10,7 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
-/**
- * Stores a rate snapshot as Pixelforge's own decimal strings.
- *
- * @implements CastsAttributes<TokenRates|null, TokenRates|null>
- */
+/** @implements CastsAttributes<TokenRates|null, TokenRates|null> */
 final class TokenRatesCast implements CastsAttributes
 {
     public function get(Model $model, string $key, mixed $value, array $attributes): ?TokenRates

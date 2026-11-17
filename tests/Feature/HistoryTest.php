@@ -17,7 +17,7 @@ function history(User $user): AssertableInertia
     return $page;
 }
 
-it('shows only the signed-in user’s generations, newest first', function () {
+it('shows a user only their own generations, newest first', function () {
     $user = User::factory()->create();
     $older = Generation::factory()->for($user)->create(['created_at' => now()->subHour()]);
     $newer = Generation::factory()->for($user)->create();

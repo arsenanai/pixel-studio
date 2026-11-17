@@ -1,7 +1,3 @@
-/**
- * Money always arrives from the server as exact nanodollars in a string plus a
- * display string. The browser renders `display` and never does arithmetic on it.
- */
 export interface Money {
     nano: string;
     display: string;
@@ -38,7 +34,6 @@ export interface PriceQuote {
     markupPercent: number;
 }
 
-/** The quote endpoint's answer: the price plus whether this user can cover its maximum. */
 export interface QuoteResponse extends PriceQuote {
     credits: { available: Money; sufficient: boolean };
 }

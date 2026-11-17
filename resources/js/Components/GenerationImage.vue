@@ -4,14 +4,12 @@ import { computed, ref } from 'vue';
 
 const props = defineProps<{ generation: Generation; size: 'sm' | 'lg' }>();
 
-// Signed URLs stop working 24h after completion; a quiet placeholder beats a broken image.
 const failedToLoad = ref(false);
 
 const url = computed(() =>
     failedToLoad.value ? null : (props.generation.image?.url ?? null),
 );
 
-// null while pending: the box pulses instead of showing text.
 const placeholder = computed(
     () =>
         ({

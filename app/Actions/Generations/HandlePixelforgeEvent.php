@@ -16,7 +16,6 @@ final readonly class HandlePixelforgeEvent
 {
     public function __construct(private ApplyGenerationUpdate $apply) {}
 
-    /** Returns false when this event id was already handled. */
     public function __invoke(PixelforgeEvent $event, string $rawBody, ?int $deliveryAttempt): bool
     {
         $generation = $event->generation === null ? null : $this->find($event->generation);
@@ -28,8 +27,6 @@ final readonly class HandlePixelforgeEvent
             ]);
         }
 
-        // The event row and the transition commit together. If applying fails, the
-        // event is not recorded either, and Pixelforge's retry gets a clean second try.
         return DB::transaction(function () use ($event, $rawBody, $deliveryAttempt, $generation): bool {
             $inserted = DB::table('webhook_events')->insertOrIgnore([
                 'provider_event_id' => $event->id,
@@ -54,8 +51,6 @@ final readonly class HandlePixelforgeEvent
         });
     }
 
-    // By our own id first: a webhook can arrive before the create call has returned
-    // the provider id, but the metadata we sent is on it from the start.
     private function find(PixelforgeGeneration $snapshot): ?Generation
     {
         $ours = $snapshot->metadataValue(Generation::METADATA_KEY);

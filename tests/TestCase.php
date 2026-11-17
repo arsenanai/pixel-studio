@@ -11,10 +11,8 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // No test may reach the real Pixelforge.
         Http::preventStrayRequests();
 
-        // Pages render without a frontend build.
         $this->withoutVite();
     }
 }

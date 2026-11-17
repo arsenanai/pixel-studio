@@ -7,7 +7,6 @@ namespace App\Data\Pixelforge;
 use App\Exceptions\InvalidPixelforgePayload;
 use App\ValueObjects\Money;
 
-/** GET /v1/usage: the provider's own record of what one API key cost, per UTC day. */
 final readonly class PixelforgeUsage
 {
     /** @param list<PixelforgeUsageDay> $days */

@@ -10,7 +10,6 @@ const props = defineProps<{
     error: string | null;
 }>();
 
-// A reference image line with no images is noise; every other line always applies.
 const lines = computed(
     () =>
         props.quote?.lines.filter(

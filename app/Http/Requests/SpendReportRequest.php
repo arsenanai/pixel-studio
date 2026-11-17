@@ -10,7 +10,6 @@ use Illuminate\Validation\Validator;
 
 final class SpendReportRequest extends FormRequest
 {
-    /** GET /v1/usage covers at most 92 days, so the report does too. */
     public const MAX_DAYS = 92;
 
     public const DEFAULT_DAYS = 30;

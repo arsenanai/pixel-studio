@@ -9,7 +9,6 @@ use App\Enums\PixelforgeErrorCode;
 use Illuminate\Http\Client\Response;
 use RuntimeException;
 
-/** Pixelforge answered with an error status. Rejected requests create and bill nothing. */
 final class PixelforgeRequestFailed extends RuntimeException
 {
     public function __construct(
@@ -25,26 +24,28 @@ final class PixelforgeRequestFailed extends RuntimeException
     public static function fromResponse(Response $response): self
     {
         $retryAfter = $response->header('Retry-After');
-        $code = null;
-        $message = "Pixelforge responded with HTTP {$response->status()}.";
-        $param = null;
-
-        try {
-            $error = Payload::of($response->json())->object('error');
-            $code = PixelforgeErrorCode::tryFrom($error->string('code'));
-            $message = $error->string('message');
-            $param = $error->nullableString('param');
-        } catch (InvalidPixelforgePayload) {
-            // A proxy or load balancer error page; the status code is all we have.
-        }
+        $error = self::errorBody($response);
 
         return new self(
             status: $response->status(),
-            errorCode: $code,
-            message: $message,
-            param: $param,
+            errorCode: $error === null ? null : PixelforgeErrorCode::tryFrom($error->string('code')),
+            message: $error?->string('message') ?? "Pixelforge responded with HTTP {$response->status()}.",
+            param: $error?->nullableString('param'),
             retryAfterSeconds: ctype_digit($retryAfter) ? (int) $retryAfter : null,
         );
+    }
+
+    private static function errorBody(Response $response): ?Payload
+    {
+        try {
+            $error = Payload::of($response->json())->object('error');
+            $error->string('code');
+            $error->string('message');
+
+            return $error;
+        } catch (InvalidPixelforgePayload) {
+            return null;
+        }
     }
 
     public function is(PixelforgeErrorCode $code): bool
@@ -52,10 +53,8 @@ final class PixelforgeRequestFailed extends RuntimeException
         return $this->errorCode === $code;
     }
 
-    /** Worth sending the same request again later. */
     public function isRetryable(): bool
     {
-        // The daily quota resets at midnight UTC; retrying within minutes cannot help.
         if ($this->is(PixelforgeErrorCode::DailyLimitExceeded)) {
             return false;
         }

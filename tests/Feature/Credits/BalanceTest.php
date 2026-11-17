@@ -16,7 +16,6 @@ beforeEach(function () {
     Queue::fake();
 });
 
-/** The docs example: at most $0.46734375 with the markup. */
 function generateExpensive(): TestResponse
 {
     return test()->post('/generations', [

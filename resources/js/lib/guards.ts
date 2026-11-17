@@ -43,7 +43,6 @@ function isQuoteLine(value: unknown): value is QuoteLine {
     );
 }
 
-/** The quote crosses the network, so it is checked rather than assumed. */
 export function isPriceQuote(value: unknown): value is PriceQuote {
     return (
         isRecord(value) &&

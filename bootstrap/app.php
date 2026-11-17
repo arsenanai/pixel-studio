@@ -24,7 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Pricing is fetched live for quotes; if Pixelforge is down, say so plainly.
         $exceptions->render(function (PixelforgeUnreachable|PixelforgeRequestFailed|InvalidPixelforgePayload $exception, Request $request) {
             $message = 'Pixelforge pricing is unavailable right now. Try again in a moment; nothing was charged.';
 

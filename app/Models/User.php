@@ -24,7 +24,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    // is_admin is deliberately not fillable: registration must never be able to set it.
     protected $fillable = [
         'name',
         'email',
@@ -66,7 +65,6 @@ class User extends Authenticatable
         return Money::fromDatabase($this->creditTransactions()->toBase()->selectRaw('COALESCE(SUM(amount_nano), 0) as total')->value('total'));
     }
 
-    /** The most each unfinished generation could still cost, held so it cannot be spent twice. */
     public function heldCredits(): Money
     {
         return Money::fromDatabase($this->generations()->pending()->toBase()->selectRaw('COALESCE(SUM(estimated_max_charge_nano), 0) as total')->value('total'));

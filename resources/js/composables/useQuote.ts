@@ -14,11 +14,6 @@ export type QuoteState = 'loading' | 'ready' | 'error';
 
 const DEBOUNCE_MS = 300;
 
-/**
- * Keeps a server quote in step with the form. `state` is 'loading' from the
- * first keystroke until the matching response lands, so the UI can never show
- * a price for inputs the user has since changed.
- */
 export function useQuote(input: () => QuoteInput): {
     quote: Ref<QuoteResponse | null>;
     state: Ref<QuoteState>;
@@ -103,5 +98,5 @@ function messageFor(failure: unknown): string {
         }
     }
 
-    return 'Couldn’t load a price. Check your connection and try again.';
+    return 'Could not load a price. Check your connection and try again.';
 }

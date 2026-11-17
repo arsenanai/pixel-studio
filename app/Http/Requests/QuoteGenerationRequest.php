@@ -11,7 +11,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 
-/** The generation form while it is being filled in: the prompt may still be empty. */
 class QuoteGenerationRequest extends FormRequest
 {
     public const PROMPT_MAX_CHARACTERS = 4_000;

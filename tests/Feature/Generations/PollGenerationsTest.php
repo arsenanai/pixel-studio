@@ -59,7 +59,6 @@ it('does not charge twice when the webhook and the poller both report success', 
     app(ApplyGenerationUpdate::class)($generation, pixelforgeGeneration('generation-succeeded'));
     $generation->forceFill(['updated_at' => CarbonImmutable::now()->subMinute()])->save();
 
-    // Already finished, so not even fetched.
     $this->artisan('pixelforge:poll');
 
     Http::assertNothingSent();

@@ -19,7 +19,6 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
-            // Only what the UI needs; never the whole model.
             'auth' => [
                 'user' => $user instanceof User ? [
                     'id' => $user->id,
@@ -29,7 +28,6 @@ class HandleInertiaRequests extends Middleware
                     'isAdmin' => $user->is_admin,
                 ] : null,
             ],
-            // Lazy, so it is only summed when a page renders it.
             'credits' => fn () => $user instanceof User ? ['available' => $user->availableCredits()] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

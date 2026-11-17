@@ -45,6 +45,6 @@ final class GenerateController
             return back()->withErrors(['credits' => $insufficient->getMessage()]);
         }
 
-        return to_route('history')->with('success', 'Sent to Pixelforge. You’ll be charged the exact cost when it finishes; if it fails, it’s free.');
+        return to_route('history')->with('success', 'Sent to Pixelforge. You will be charged the exact cost when it finishes, and nothing if it fails.');
     }
 }

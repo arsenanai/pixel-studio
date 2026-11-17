@@ -10,7 +10,6 @@ use App\Models\User;
 use App\ValueObjects\Money;
 use InvalidArgumentException;
 
-/** A pretend purchase: no payment is taken, the credits are simply added. */
 final readonly class PurchaseCredits
 {
     public function __invoke(User $user, Money $amount): CreditTransaction

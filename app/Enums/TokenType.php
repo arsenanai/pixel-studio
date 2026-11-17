@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-/** Backed by the keys Pixelforge uses in `rates` and `usage`. */
 enum TokenType: string
 {
     case InputText = 'input_text_tokens';

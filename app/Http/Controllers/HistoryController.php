@@ -18,7 +18,6 @@ final class HistoryController
 
         return Inertia::render('History/Index', [
             'generations' => GenerationResource::collection($generations),
-            // The page polls only while something on it can still change.
             'hasPending' => $user->generations()->pending()->exists(),
         ]);
     }

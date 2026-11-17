@@ -12,10 +12,6 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use UnexpectedValueException;
 
-/**
- * Spend per UTC day and per user. Days are the day a generation completed,
- * because that is the day Pixelforge bills it on.
- */
 final readonly class BuildSpendReport
 {
     /**
@@ -45,7 +41,6 @@ final readonly class BuildSpendReport
         $dayUsers = [];
         $total = SpendTotals::empty();
 
-        // Every slice is summed from the same integer rows, so they always agree.
         foreach ($rows as $row) {
             $date = $this->text($row->day);
             $user = ['id' => $this->integer($row->user_id), 'name' => $this->text($row->name), 'email' => $this->text($row->email)];
@@ -78,7 +73,6 @@ final readonly class BuildSpendReport
             ->where('generations.completed_at', '<', $to->utc()->addDay()->startOfDay());
     }
 
-    // Postgres returns SUM(bigint) as a numeric string; it is still an exact integer.
     private function integer(mixed $value): int
     {
         if (is_int($value)) {

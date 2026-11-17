@@ -13,7 +13,6 @@ const props = defineProps<{
     hasPending: boolean;
 }>();
 
-// Poll our own server (not Pixelforge) only while something can still change.
 const { start, stop } = usePoll(
     2500,
     { only: ['generations', 'hasPending'] },
@@ -108,7 +107,6 @@ function details(generation: Generation): string {
             </div>
 
             <template v-else>
-                <!-- Desktop: a table, so money lines up in columns. -->
                 <div
                     class="mt-8 hidden overflow-hidden rounded-lg border border-gray-200 bg-white md:block"
                 >
@@ -201,7 +199,6 @@ function details(generation: Generation): string {
                     </table>
                 </div>
 
-                <!-- Mobile: one card per generation. -->
                 <TransitionGroup
                     tag="ul"
                     name="row"

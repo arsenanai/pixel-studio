@@ -10,12 +10,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * A generation as its owner sees it. Provider cost is ours, not theirs, so it
- * is not included.
- *
- * @property Generation $resource
- */
+/** @property Generation $resource */
 final class GenerationResource extends JsonResource
 {
     /** @return array<string, mixed> */

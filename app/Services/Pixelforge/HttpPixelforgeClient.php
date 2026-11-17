@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/** Makes exactly one attempt per call; retry policy belongs to the caller. */
 final readonly class HttpPixelforgeClient implements PixelforgeClient
 {
     private const PRICING_CACHE_KEY = 'pixelforge.pricing';
@@ -60,8 +59,6 @@ final readonly class HttpPixelforgeClient implements PixelforgeClient
         return PixelforgeUsage::fromPayload(Payload::of($response->json()));
     }
 
-    // Only the estimate reads current pricing. A finished generation is always
-    // charged at the rates snapshotted on it, so a stale cache cannot misbill.
     public function pricing(): PixelforgePricing
     {
         $json = Cache::remember(

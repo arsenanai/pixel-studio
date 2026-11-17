@@ -33,7 +33,6 @@ final class SubmitGenerationJob implements ShouldBeUnique, ShouldQueueAfterCommi
         return $this->generation->id;
     }
 
-    // Concurrency limits can hold a submit for a while; after this the poller re-dispatches it.
     public function retryUntil(): CarbonImmutable
     {
         return CarbonImmutable::now()->addMinutes(15);
@@ -52,14 +51,12 @@ final class SubmitGenerationJob implements ShouldBeUnique, ShouldQueueAfterCommi
 
     public function failed(?Throwable $exception): void
     {
-        // The row stays queued; pixelforge:poll submits it again with the same key.
         Log::warning('pixelforge.submit.gave_up', [
             'generation_id' => $this->generation->id,
             'exception' => $exception?->getMessage(),
         ]);
     }
 
-    /** Doubles from 5 seconds up to a minute, and never sooner than Pixelforge asked. */
     private function delay(?int $retryAfter): int
     {
         $exponential = min(self::MAX_DELAY_SECONDS, 5 * 2 ** max(0, $this->attempts() - 1));

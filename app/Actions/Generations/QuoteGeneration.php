@@ -12,7 +12,6 @@ use App\ValueObjects\TokenRange;
 use App\ValueObjects\TokenUsage;
 use Illuminate\Container\Attributes\Config;
 
-/** Estimates a generation from Pixelforge's published token rules. */
 final readonly class QuoteGeneration
 {
     public function __construct(
@@ -36,12 +35,7 @@ final readonly class QuoteGeneration
         );
     }
 
-    /**
-     * ceil(characters / 4), with the real count within ±15% of that. The bounds are
-     * rounded outwards so the range always contains whatever Pixelforge counts.
-     *
-     * @return array{estimate: int, range: TokenRange}
-     */
+    /** @return array{estimate: int, range: TokenRange} */
     private function textTokens(string $prompt): array
     {
         $perToken = $this->pricing->charactersPerTextToken;
