@@ -4,8 +4,8 @@ An image generator built on [Pixelforge](https://pixelforge.promptedit.dev/docs)
 
 Laravel 12 · Inertia 2 · Vue 3 · TypeScript · Tailwind · PostgreSQL · Pest
 
-- **Deployed:** _to be added_
-- **Demo login:** _to be added_ (an operator account can open the spend report at `/admin`)
+- **Deployed:** https://pixel-studio.laravel.cloud (Laravel Cloud: Postgres, a queue worker and the scheduler)
+- **Demo login:** `demo@pixel.studio` / `w4mlhM5qf3B0ahyW`. The operator login for the spend report at `/admin` is in the submission form.
 
 ## How the money works
 
