@@ -28,7 +28,7 @@ function submitForm(array $input = []): TestResponse
 }
 
 it('stores a queued generation with its estimate and queues the submit', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->withCredits()->create();
 
     $this->actingAs($user);
     submitForm()->assertRedirect('/history')->assertSessionHas('success');
@@ -50,7 +50,7 @@ it('stores a queued generation with its estimate and queues the submit', functio
 });
 
 it('prices the generation itself instead of trusting the browser', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->withCredits()->create());
 
     submitForm(['estimated_charge_nano' => 1, 'charge_nano' => 1, 'status' => 'succeeded']);
 
@@ -59,7 +59,7 @@ it('prices the generation itself instead of trusting the browser', function () {
 });
 
 it('does not call Pixelforge while handling the form', function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->withCredits()->create());
 
     submitForm();
 

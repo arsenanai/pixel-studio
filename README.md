@@ -44,6 +44,14 @@ php artisan pixelforge:usage                                          # what Pix
 
 Reconciliation runs every night for the previous day. Usage is per API key, so each environment has its own key and reconciles only its own numbers.
 
+## Credit balances
+
+Credits are US dollars, held in an append-only `credit_transactions` ledger: purchases are positive and charges negative. A balance is the sum of the ledger and is never stored.
+
+- **Buying** is simulated: the Credits page adds $1, $5 or $20 with no payment.
+- **Holding.** Available credit is the balance minus the *estimated maximum* of the user's unfinished generations. Submitting locks the user's row and refuses any generation whose maximum exceeds what is available, so two quick submits can't spend the same money, and whatever an image really costs is already covered.
+- **Charging.** When a generation succeeds, the exact charge is debited in the same transaction as the status change. `(generation_id, type)` is unique, so even if the rank rule were bypassed the database refuses a second debit. A failed or rejected generation debits nothing, and its hold ends with its status.
+
 ## Running it locally
 
 ```bash
@@ -80,7 +88,6 @@ Prompt keywords make Pixelforge misbehave on purpose: `[fail]`, `[blocked]`, `[o
 
 ## What I'd do next
 
-- Credit balances with a ledger: a hold for the estimated maximum on submit, the exact charge on success, and a unique debit per generation.
 - Copy images to our own storage before they expire.
 - Metrics and alerts for signature failures, submit give-ups, reconciliation drift and queue depth.
 - Reverb websockets if status updates ever need to be instant.

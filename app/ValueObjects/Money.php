@@ -24,6 +24,20 @@ final readonly class Money implements JsonSerializable
         return new self($nano);
     }
 
+    /** A BIGINT column or SUM() result; PDO may return it as a numeric string. */
+    public static function fromDatabase(mixed $value): self
+    {
+        if (is_int($value)) {
+            return new self($value);
+        }
+
+        if (is_string($value) && preg_match('/^-?\d{1,19}$/', $value) === 1) {
+            return new self((int) $value);
+        }
+
+        throw new InvalidArgumentException('Expected a whole number of nanodollars from the database.');
+    }
+
     public static function zero(): self
     {
         return new self(0);

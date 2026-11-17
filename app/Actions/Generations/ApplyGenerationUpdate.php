@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Actions\Generations;
 
 use App\Data\Pixelforge\PixelforgeGeneration;
+use App\Enums\CreditTransactionType;
 use App\Enums\GenerationStatus;
 use App\Exceptions\InvalidPixelforgePayload;
+use App\Models\CreditTransaction;
 use App\Models\Generation;
 use App\ValueObjects\Money;
 use Carbon\CarbonImmutable;
@@ -120,6 +122,9 @@ final readonly class ApplyGenerationUpdate
         $row->started_at ??= $snapshot->startedAt;
         $row->completed_at = $snapshot->completedAt;
 
+        // Same transaction as the status change, and unique per generation.
+        CreditTransaction::record($row->user_id, CreditTransactionType::Charge, Money::zero()->subtract($charge), $row->id);
+
         if ($charge->isGreaterThan($row->estimated_max_charge_nano)) {
             Log::warning('pixelforge.pricing.above_estimate', [
                 'generation_id' => $row->id,
@@ -129,7 +134,8 @@ final readonly class ApplyGenerationUpdate
         }
     }
 
-    // Failed generations are never billed by Pixelforge, so we never charge for them.
+    // Failed generations are never billed by Pixelforge, so we never charge for them,
+    // and their hold on the user's credits ends with this status change.
     private function fail(Generation $row, string $code, string $message, ?CarbonImmutable $startedAt, CarbonImmutable $completedAt): void
     {
         $row->status = GenerationStatus::Failed;

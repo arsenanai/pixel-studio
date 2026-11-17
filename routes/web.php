@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\SpendReportController;
+use App\Http\Controllers\CreditsController;
 use App\Http\Controllers\GenerateController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
@@ -15,6 +16,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:generations')
         ->name('generations.store');
     Route::get('/history', HistoryController::class)->name('history');
+    Route::get('/credits', [CreditsController::class, 'index'])->name('credits');
+    Route::post('/credits', [CreditsController::class, 'store'])
+        ->middleware('throttle:generations')
+        ->name('credits.store');
     Route::post('/quote', QuoteController::class)
         ->middleware('throttle:quotes')
         ->name('quote');

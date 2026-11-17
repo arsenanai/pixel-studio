@@ -6,7 +6,7 @@ import { useQuote } from '@/composables/useQuote';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatTokens } from '@/lib/format';
 import type { Option } from '@/types/models';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, nextTick, ref } from 'vue';
 
 const props = defineProps<{
@@ -49,10 +49,13 @@ const { quote, state, error } = useQuote(() => ({
     ],
 }));
 
+const canAfford = computed(() => quote.value?.credits.sufficient ?? true);
+
 const canSubmit = computed(
     () =>
         !form.processing &&
         state.value === 'ready' &&
+        canAfford.value &&
         form.prompt.trim() !== '' &&
         !overLimit.value,
 );
@@ -262,6 +265,34 @@ function submit(): void {
                     </fieldset>
 
                     <div class="border-t border-gray-200 pt-6">
+                        <div
+                            v-if="
+                                (quote && state === 'ready' && !canAfford) ||
+                                fieldError('credits')
+                            "
+                            role="alert"
+                            class="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                        >
+                            <p v-if="fieldError('credits')">
+                                {{ fieldError('credits') }}
+                            </p>
+                            <p v-else-if="quote">
+                                This image could cost up to
+                                <span class="tabular-nums">{{
+                                    quote.charge.max.display
+                                }}</span>, and you have
+                                <span class="tabular-nums">{{
+                                    quote.credits.available.display
+                                }}</span>
+                                available.
+                            </p>
+                            <Link
+                                :href="route('credits')"
+                                class="mt-1 inline-block font-medium underline hover:no-underline"
+                            >
+                                Buy credits
+                            </Link>
+                        </div>
                         <button
                             type="submit"
                             class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-indigo-300 sm:w-auto"

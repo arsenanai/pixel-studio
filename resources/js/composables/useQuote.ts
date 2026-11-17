@@ -1,5 +1,5 @@
-import { isPriceQuote } from '@/lib/guards';
-import type { PriceQuote } from '@/types/models';
+import { isQuoteResponse } from '@/lib/guards';
+import type { QuoteResponse } from '@/types/models';
 import axios from 'axios';
 import { onBeforeUnmount, ref, watch, type Ref } from 'vue';
 
@@ -20,11 +20,11 @@ const DEBOUNCE_MS = 300;
  * a price for inputs the user has since changed.
  */
 export function useQuote(input: () => QuoteInput): {
-    quote: Ref<PriceQuote | null>;
+    quote: Ref<QuoteResponse | null>;
     state: Ref<QuoteState>;
     error: Ref<string | null>;
 } {
-    const quote = ref<PriceQuote | null>(null);
+    const quote = ref<QuoteResponse | null>(null);
     const state = ref<QuoteState>('loading');
     const error = ref<string | null>(null);
 
@@ -44,7 +44,7 @@ export function useQuote(input: () => QuoteInput): {
                 },
             );
 
-            if (!isPriceQuote(response.data)) {
+            if (!isQuoteResponse(response.data)) {
                 throw new Error('Unexpected quote response');
             }
 

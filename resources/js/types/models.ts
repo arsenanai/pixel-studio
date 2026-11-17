@@ -38,6 +38,11 @@ export interface PriceQuote {
     markupPercent: number;
 }
 
+/** The quote endpoint's answer: the price plus whether this user can cover its maximum. */
+export interface QuoteResponse extends PriceQuote {
+    credits: { available: Money; sufficient: boolean };
+}
+
 export interface Option {
     value: string;
     label: string;

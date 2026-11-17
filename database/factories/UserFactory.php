@@ -2,7 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Enums\CreditTransactionType;
+use App\Models\CreditTransaction;
 use App\Models\User;
+use App\ValueObjects\Money;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -31,6 +34,16 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /** Starts with a simulated purchase, the same way a real user gets credits. */
+    public function withCredits(int $dollars = 5): static
+    {
+        return $this->afterCreating(fn (User $user) => CreditTransaction::record(
+            $user->id,
+            CreditTransactionType::Purchase,
+            Money::fromNano($dollars * Money::NANO_PER_DOLLAR),
+        ));
     }
 
     public function admin(): static

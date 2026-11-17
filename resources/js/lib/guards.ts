@@ -1,4 +1,10 @@
-import type { Estimate, Money, PriceQuote, QuoteLine } from '@/types/models';
+import type {
+    Estimate,
+    Money,
+    PriceQuote,
+    QuoteLine,
+    QuoteResponse,
+} from '@/types/models';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -47,5 +53,15 @@ export function isPriceQuote(value: unknown): value is PriceQuote {
         isEstimate(value.markup) &&
         isEstimate(value.charge) &&
         typeof value.markupPercent === 'number'
+    );
+}
+
+export function isQuoteResponse(value: unknown): value is QuoteResponse {
+    return (
+        isPriceQuote(value) &&
+        isRecord(value) &&
+        isRecord(value.credits) &&
+        isMoney(value.credits.available) &&
+        typeof value.credits.sufficient === 'boolean'
     );
 }

@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Actions\Generations\CreateGeneration;
 use App\Enums\ImageQuality;
 use App\Enums\ImageSize;
+use App\Exceptions\InsufficientCredits;
 use App\Http\Requests\QuoteGenerationRequest;
 use App\Http\Requests\StoreGenerationRequest;
 use App\Models\User;
@@ -38,7 +39,11 @@ final class GenerateController
 
     public function store(StoreGenerationRequest $request, CreateGeneration $create, #[CurrentUser] User $user): RedirectResponse
     {
-        $create($user, $request->prompt(), $request->size(), $request->quality(), $request->referenceImages());
+        try {
+            $create($user, $request->prompt(), $request->size(), $request->quality(), $request->referenceImages());
+        } catch (InsufficientCredits $insufficient) {
+            return back()->withErrors(['credits' => $insufficient->getMessage()]);
+        }
 
         return to_route('history')->with('success', 'Sent to Pixelforge. You’ll be charged the exact cost when it finishes; if it fails, it’s free.');
     }

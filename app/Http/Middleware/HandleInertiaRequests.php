@@ -29,6 +29,8 @@ class HandleInertiaRequests extends Middleware
                     'isAdmin' => $user->is_admin,
                 ] : null,
             ],
+            // Lazy, so it is only summed when a page renders it.
+            'credits' => fn () => $user instanceof User ? ['available' => $user->availableCredits()] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

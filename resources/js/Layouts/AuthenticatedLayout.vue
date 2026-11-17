@@ -13,6 +13,7 @@ const showingNavigationDropdown = ref(false);
 const links = computed(() => [
     { label: 'Generate', name: 'generate' },
     { label: 'History', name: 'history' },
+    { label: 'Credits', name: 'credits' },
     ...(page.props.auth.user.isAdmin
         ? [{ label: 'Spend report', name: 'admin.report' }]
         : []),
@@ -46,7 +47,17 @@ const links = computed(() => [
                         </div>
                     </div>
 
-                    <div class="hidden sm:ms-6 sm:flex sm:items-center">
+                    <div
+                        class="hidden sm:ms-6 sm:flex sm:items-center sm:gap-2"
+                    >
+                        <Link
+                            v-if="page.props.credits"
+                            :href="route('credits')"
+                            class="rounded-md px-3 py-2 text-sm tabular-nums text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        >
+                            <span class="sr-only">Available credits:</span>
+                            {{ page.props.credits.available.display }}
+                        </Link>
                         <Dropdown align="right" width="48">
                             <template #trigger>
                                 <button

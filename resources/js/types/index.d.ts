@@ -12,6 +12,7 @@ export type PageProps<
     auth: {
         user: User;
     };
+    credits: { available: import('./models').Money } | null;
     flash: {
         success: string | null;
         error: string | null;
