@@ -1,0 +1,18 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: max
+    paths:
+        - app
+        - database/factories
+        - database/seeders
+    treatPhpDocTypesAsCertain: true
+    excludePaths:
+        # Breeze's generated auth/profile scaffolding is not type-clean at max and is
+        # not part of this product. Everything we write is analysed.
+        analyse:
+            - app/Http/Controllers/Auth
+            - app/Http/Controllers/ProfileController.php
+            - app/Http/Requests/Auth
+            - app/Http/Requests/ProfileUpdateRequest.php
