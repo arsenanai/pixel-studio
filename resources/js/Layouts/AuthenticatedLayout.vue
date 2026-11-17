@@ -10,7 +10,10 @@ import { computed, ref } from 'vue';
 const page = usePage();
 const showingNavigationDropdown = ref(false);
 
-const links = computed(() => [{ label: 'Generate', name: 'generate' }]);
+const links = computed(() => [
+    { label: 'Generate', name: 'generate' },
+    { label: 'History', name: 'history' },
+]);
 </script>
 
 <template>

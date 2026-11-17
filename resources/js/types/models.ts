@@ -43,3 +43,36 @@ export interface Option {
     label: string;
     hint?: string;
 }
+
+export type GenerationStatus = 'queued' | 'processing' | 'succeeded' | 'failed';
+
+export interface Generation {
+    id: string;
+    prompt: string;
+    size: { value: string; label: string; dimensions: string };
+    quality: { value: string; label: string };
+    referenceImageCount: number;
+    status: GenerationStatus;
+    statusLabel: string;
+    estimate: Estimate<Money>;
+    charge: Money | null;
+    image: { url: string | null; expiresAt: string | null } | null;
+    error: string | null;
+    createdAt: string;
+    completedAt: string | null;
+}
+
+export interface Paginated<T> {
+    data: T[];
+    links: {
+        prev: string | null;
+        next: string | null;
+    };
+    meta: {
+        current_page: number;
+        last_page: number;
+        from: number | null;
+        to: number | null;
+        total: number;
+    };
+}

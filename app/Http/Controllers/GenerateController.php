@@ -40,6 +40,6 @@ final class GenerateController
     {
         $create($user, $request->prompt(), $request->size(), $request->quality(), $request->referenceImages());
 
-        return to_route('generate')->with('success', 'Sent to Pixelforge. You’ll be charged the exact cost when it finishes; if it fails, it’s free.');
+        return to_route('history')->with('success', 'Sent to Pixelforge. You’ll be charged the exact cost when it finishes; if it fails, it’s free.');
     }
 }

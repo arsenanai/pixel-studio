@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GenerateController;
+use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuoteController;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/generations', [GenerateController::class, 'store'])
         ->middleware('throttle:generations')
         ->name('generations.store');
+    Route::get('/history', HistoryController::class)->name('history');
     Route::post('/quote', QuoteController::class)
         ->middleware('throttle:quotes')
         ->name('quote');

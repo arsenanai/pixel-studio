@@ -13,3 +13,14 @@ export function formatTokenRange(min: number, max: number): string {
 export function formatMoneyRange(min: string, max: string): string {
     return min === max ? min : `${min}–${max}`;
 }
+
+const dateTime = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+});
+
+export function formatDateTime(iso: string): string {
+    return dateTime.format(new Date(iso));
+}

@@ -31,7 +31,7 @@ it('stores a queued generation with its estimate and queues the submit', functio
     $user = User::factory()->create();
 
     $this->actingAs($user);
-    submitForm()->assertRedirect('/generate')->assertSessionHas('success');
+    submitForm()->assertRedirect('/history')->assertSessionHas('success');
 
     $generation = Generation::sole();
 
