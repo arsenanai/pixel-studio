@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Credits\PurchaseCredits;
 use App\Actions\Generations\ApplyGenerationUpdate;
 use App\Enums\CreditTransactionType;
 use App\Models\CreditTransaction;
@@ -151,6 +152,50 @@ it('shows the balance, holds and history on the credits page', function () {
         ->where('held.display', '$0.086325')
         ->where('available.display', '$4.913675')
         ->has('packs', 3)
-        ->where('transactions.0.label', 'Credits bought')
+        ->where('transactions.data.0.label', 'Credits bought')
+        ->where('transactions.data.0.balanceAfter.display', '$5.00')
         ->where('credits.available.display', '$4.913675'));
+});
+
+describe('statement', function () {
+    it('shows a running balance after every entry, and the prompt behind each charge', function () {
+        $user = User::factory()->withCredits(5)->create();
+        $generation = Generation::factory()->for($user)->processing()->create(['prompt' => 'A lighthouse at dusk']);
+        app(ApplyGenerationUpdate::class)($generation, pixelforgeGeneration('generation-succeeded', ['id' => $generation->provider_job_id]));
+
+        $this->actingAs($user)->get('/credits')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('transactions.total', 2)
+            ->where('transactions.data.0.type', 'charge')
+            ->where('transactions.data.0.prompt', 'A lighthouse at dusk')
+            ->where('transactions.data.0.amount.display', '-$0.3818875')
+            ->where('transactions.data.0.balanceAfter.display', '$4.6181125')
+            ->where('transactions.data.1.type', 'purchase')
+            ->where('transactions.data.1.balanceAfter.display', '$5.00'));
+    });
+
+    it('filters by type while keeping the true running balance', function () {
+        $user = User::factory()->withCredits(5)->create();
+        $generation = Generation::factory()->for($user)->processing()->create();
+        app(ApplyGenerationUpdate::class)($generation, pixelforgeGeneration('generation-succeeded', ['id' => $generation->provider_job_id]));
+        app(PurchaseCredits::class)($user, Money::fromUsdString('1'));
+
+        $this->actingAs($user)->get('/credits?type=purchase')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('filters.type', 'purchase')
+            ->where('transactions.total', 2)
+            ->where('transactions.data.0.balanceAfter.display', '$5.6181125')
+            ->where('transactions.data.1.balanceAfter.display', '$5.00'));
+    });
+
+    it('pages through a long statement', function () {
+        $user = User::factory()->create();
+
+        foreach (range(1, 30) as $n) {
+            app(PurchaseCredits::class)($user, Money::fromUsdString('1'));
+        }
+
+        $this->actingAs($user)->get('/credits?page=2')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('transactions.current_page', 2)
+            ->has('transactions.data', 5)
+            ->where('transactions.data.4.balanceAfter.display', '$1.00'));
+    });
 });

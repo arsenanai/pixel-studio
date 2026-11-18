@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Credits\CreditStatement;
 use App\Actions\Credits\PurchaseCredits;
-use App\Models\CreditTransaction;
+use App\Enums\CreditTransactionType;
 use App\Models\User;
 use App\ValueObjects\Money;
 use Illuminate\Container\Attributes\Config;
@@ -18,9 +19,14 @@ use Inertia\Response;
 
 final class CreditsController
 {
+    private const PER_PAGE = 25;
+
     /** @param list<int> $packs */
-    public function index(#[CurrentUser] User $user, #[Config('billing.credit_packs')] array $packs): Response
+    public function index(Request $request, CreditStatement $statement, #[CurrentUser] User $user, #[Config('billing.credit_packs')] array $packs): Response
     {
+        $request->validate(['type' => ['nullable', Rule::enum(CreditTransactionType::class)]]);
+        $type = $request->enum('type', CreditTransactionType::class);
+
         return Inertia::render('Credits/Index', [
             'balance' => $user->creditBalance(),
             'held' => $user->heldCredits(),
@@ -29,13 +35,8 @@ final class CreditsController
                 'dollars' => $dollars,
                 'amount' => Money::fromNano($dollars * Money::NANO_PER_DOLLAR),
             ], $packs),
-            'transactions' => $user->creditTransactions()->latest()->latest('id')->limit(50)->get()
-                ->map(fn (CreditTransaction $transaction) => [
-                    'id' => $transaction->id,
-                    'label' => $transaction->type->label(),
-                    'amount' => $transaction->amount_nano,
-                    'createdAt' => $transaction->created_at->toIso8601ZuluString(),
-                ]),
+            'filters' => ['type' => $type?->value],
+            'transactions' => $statement($user, $type, self::PER_PAGE),
         ]);
     }
 
@@ -47,6 +48,6 @@ final class CreditsController
 
         $purchase($user, $amount);
 
-        return back()->with('success', "Added {$amount->format()} of credits. No payment was taken; purchases here are simulated.");
+        return back()->with('success', __('Added :amount of credits. No payment was taken; purchases here are simulated.', ['amount' => $amount->format()]));
     }
 }
