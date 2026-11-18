@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Generation;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia;
 
@@ -30,6 +31,22 @@ it('saves the choice on the account so it follows the user to other devices', fu
     $this->flushSession();
     $this->actingAs($user->fresh())->get('/history')
         ->assertInertia(fn (AssertableInertia $page) => $page->where('locale', 'kk'));
+});
+
+it('translates server messages into the chosen language', function () {
+    $this->post('/locale', ['locale' => 'kk']);
+
+    $this->from('/login')->post('/login', ['email' => '', 'password' => ''])
+        ->assertSessionHasErrors(['email' => 'электрондық пошта өрісі міндетті.']);
+});
+
+it('translates stored failure reasons when they are shown', function () {
+    $user = User::factory()->create(['locale' => 'kk']);
+    Generation::factory()->for($user)->failed('content_policy_violation', 'Pixelforge declined this prompt under its content policy.')->create();
+
+    $this->actingAs($user)->get('/history')->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('generations.data.0.error', 'Pixelforge бұл сипаттаманы мазмұн саясатына сәйкес қабылдамады.')
+        ->where('generations.data.0.statusLabel', 'Сәтсіз'));
 });
 
 it('rejects a language it does not support', function () {

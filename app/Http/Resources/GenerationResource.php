@@ -46,7 +46,7 @@ final class GenerationResource extends JsonResource
                 ],
                 default => null,
             },
-            'error' => $generation->error_message,
+            'error' => $generation->error_message === null ? null : __($generation->error_message),
             'createdAt' => $generation->created_at->toIso8601ZuluString(),
             'completedAt' => $generation->completed_at?->toIso8601ZuluString(),
         ];

@@ -39,7 +39,10 @@ export function tc(
     const forms = (catalog(currentLocale())[key] ?? key).split('|');
     const form = forms[count === 1 ? 0 : Math.min(1, forms.length - 1)];
 
-    return replace(form ?? key, { count, ...replacements });
+    return replace(form ?? key, {
+        count: new Intl.NumberFormat(intlLocale()).format(count),
+        ...replacements,
+    });
 }
 
 export function intlLocale(): string {

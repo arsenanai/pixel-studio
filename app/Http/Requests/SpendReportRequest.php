@@ -38,9 +38,9 @@ final class SpendReportRequest extends FormRequest
             }
 
             if ($this->from()->greaterThan($this->to())) {
-                $validator->errors()->add('from', 'The start date must be on or before the end date.');
+                $validator->errors()->add('from', __('The start date must be on or before the end date.'));
             } elseif ($this->from()->diffInDays($this->to()) + 1 > self::MAX_DAYS) {
-                $validator->errors()->add('from', 'Pick at most '.self::MAX_DAYS.' days; that is all Pixelforge reports at once.');
+                $validator->errors()->add('from', __('Pick at most :days days; that is all Pixelforge reports at once.', ['days' => self::MAX_DAYS]));
             }
         }];
     }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { QuoteState } from '@/composables/useQuote';
 import { formatMoneyRange, formatTokenRange } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Money, PriceQuote, Range } from '@/types/models';
 import { computed } from 'vue';
 
@@ -28,7 +29,7 @@ function range(money: Range<Money>): string {
         class="rounded-lg border border-gray-200 bg-white p-5"
     >
         <h2 id="cost-heading" class="text-sm font-medium text-gray-500">
-            Estimated cost
+            {{ t('Estimated cost') }}
         </h2>
 
         <div aria-live="polite" class="mt-1">
@@ -46,10 +47,11 @@ function range(money: Range<Money>): string {
                     }}</span>
                 </p>
                 <p class="mt-1 text-sm text-gray-500">
-                    Usually about
-                    <span class="tabular-nums text-gray-700">{{
-                        quote.charge.typical.display
-                    }}</span>
+                    {{
+                        t('Usually about :amount', {
+                            amount: quote.charge.typical.display,
+                        })
+                    }}
                 </p>
             </template>
             <div v-else-if="state !== 'error'" class="space-y-2 pt-1">
@@ -72,12 +74,14 @@ function range(money: Range<Money>): string {
 
         <table v-if="quote" class="mt-5 w-full text-sm">
             <caption class="sr-only">
-                Cost breakdown at Pixelforge's rates
+                {{
+                    t("Cost breakdown at Pixelforge's rates")
+                }}
             </caption>
             <thead class="sr-only">
                 <tr>
-                    <th scope="col">Item</th>
-                    <th scope="col">Cost</th>
+                    <th scope="col">{{ t('Item') }}</th>
+                    <th scope="col">{{ t('Cost') }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -89,12 +93,14 @@ function range(money: Range<Money>): string {
                         {{ line.label }}
                         <span class="block text-xs tabular-nums text-gray-500">
                             {{
-                                formatTokenRange(
-                                    line.tokens.min,
-                                    line.tokens.max,
-                                )
+                                t(':tokens tokens at :rate/1M', {
+                                    tokens: formatTokenRange(
+                                        line.tokens.min,
+                                        line.tokens.max,
+                                    ),
+                                    rate: line.ratePerMillion.display,
+                                })
                             }}
-                            tokens at {{ line.ratePerMillion.display }}/1M
                         </span>
                     </th>
                     <td
@@ -107,7 +113,7 @@ function range(money: Range<Money>): string {
             <tfoot class="border-t border-gray-200 text-gray-700">
                 <tr>
                     <th scope="row" class="pt-3 text-left font-normal">
-                        Pixelforge's cost
+                        {{ t("Pixelforge's cost") }}
                     </th>
                     <td class="pt-3 text-right tabular-nums">
                         {{ range(quote.providerCost) }}
@@ -115,14 +121,20 @@ function range(money: Range<Money>): string {
                 </tr>
                 <tr>
                     <th scope="row" class="pt-1 text-left font-normal">
-                        Our {{ quote.markupPercent }}% markup
+                        {{
+                            t('Our :percent% markup', {
+                                percent: quote.markupPercent,
+                            })
+                        }}
                     </th>
                     <td class="pt-1 text-right tabular-nums">
                         {{ range(quote.markup) }}
                     </td>
                 </tr>
                 <tr class="font-medium text-gray-900">
-                    <th scope="row" class="pt-1 text-left">You pay</th>
+                    <th scope="row" class="pt-1 text-left">
+                        {{ t('You pay') }}
+                    </th>
                     <td class="pt-1 text-right tabular-nums">
                         {{ range(quote.charge) }}
                     </td>
@@ -131,9 +143,11 @@ function range(money: Range<Money>): string {
         </table>
 
         <p class="mt-4 text-xs leading-5 text-gray-500">
-            The exact amount depends on how many tokens Pixelforge counts in
-            your prompt and how long the model reasons. You're charged exactly
-            that when the image is ready. Failed generations are free.
+            {{
+                t(
+                    "The exact amount depends on how many tokens Pixelforge counts in your prompt and how long the model reasons. You're charged exactly that when the image is ready. Failed generations are free.",
+                )
+            }}
         </p>
     </section>
 </template>

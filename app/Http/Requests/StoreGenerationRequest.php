@@ -19,7 +19,7 @@ final class StoreGenerationRequest extends QuoteGenerationRequest
     {
         return [
             ...parent::messages(),
-            'prompt.required' => 'Describe the image you want.',
+            'prompt.required' => __('Describe the image you want.'),
         ];
     }
 }

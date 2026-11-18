@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/lib/i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { onBeforeUnmount, ref, watch } from 'vue';
 
@@ -40,7 +41,7 @@ watch(
                 class="-m-1 inline-flex min-h-8 min-w-8 items-center justify-center rounded opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current"
                 @click="dismissed = true"
             >
-                <span class="sr-only">Dismiss</span>
+                <span class="sr-only">{{ t('Dismiss') }}</span>
                 <svg
                     class="h-4 w-4"
                     viewBox="0 0 20 20"

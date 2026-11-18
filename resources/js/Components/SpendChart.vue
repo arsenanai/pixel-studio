@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { intlLocale, t, tc } from '@/lib/i18n';
+import { formatDay } from '@/lib/format';
+import { t, tc } from '@/lib/i18n';
 import type { SpendTotals } from '@/types/models';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
@@ -70,32 +71,12 @@ const ticks = computed(() =>
 
 const money = computed(
     () =>
-        new Intl.NumberFormat(intlLocale(), {
+        new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
             notation: scaleMax.value >= 10_000 ? 'compact' : 'standard',
             maximumFractionDigits: scaleMax.value < 1 ? 2 : 0,
             minimumFractionDigits: 0,
-        }),
-);
-
-const dateLabel = computed(
-    () =>
-        new Intl.DateTimeFormat(intlLocale(), {
-            month: 'short',
-            day: 'numeric',
-            timeZone: 'UTC',
-        }),
-);
-
-const longDate = computed(
-    () =>
-        new Intl.DateTimeFormat(intlLocale(), {
-            weekday: 'short',
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-            timeZone: 'UTC',
         }),
 );
 
@@ -184,7 +165,7 @@ function summary(day: { date: string; totals: SpendTotals }): string {
     return t(
         ':date: charged :charged, Pixelforge cost :cost, profit :profit, :images.',
         {
-            date: longDate.value.format(new Date(day.date)),
+            date: formatDay(day.date, 'long'),
             charged: day.totals.charged.display,
             cost: day.totals.providerCost.display,
             profit: day.totals.profit.display,
@@ -324,7 +305,7 @@ function choose(): void {
                                 text-anchor="middle"
                                 class="tick"
                             >
-                                {{ dateLabel.format(new Date(bar.day.date)) }}
+                                {{ formatDay(bar.day.date, 'short') }}
                             </text>
                         </template>
                     </g>
@@ -350,7 +331,7 @@ function choose(): void {
                     :style="{ left: `${tooltipLeft}px` }"
                 >
                     <p class="font-medium text-gray-500">
-                        {{ longDate.format(new Date(current.date)) }}
+                        {{ formatDay(current.date, 'long') }}
                     </p>
                     <p class="mt-1 text-base font-semibold text-gray-900">
                         {{ current.totals.charged.display }}

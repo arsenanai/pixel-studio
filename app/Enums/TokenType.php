@@ -14,10 +14,10 @@ enum TokenType: string
     public function label(): string
     {
         return match ($this) {
-            self::InputText => 'Prompt text',
-            self::InputImage => 'Reference images',
-            self::Output => 'Image output',
-            self::Reasoning => 'Reasoning',
+            self::InputText => __('Prompt text'),
+            self::InputImage => __('Reference images'),
+            self::Output => __('Image output'),
+            self::Reasoning => __('Reasoning'),
         };
     }
 }

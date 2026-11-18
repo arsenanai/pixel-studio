@@ -7,6 +7,9 @@ use App\Enums\TokenType;
 use App\ValueObjects\PriceQuote;
 use App\ValueObjects\QuoteLine;
 use App\ValueObjects\TokenRange;
+use Tests\TestCase;
+
+uses(TestCase::class);
 
 function quote(string $prompt, ImageSize $size, ImageQuality $quality, int $references = 0): PriceQuote
 {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@/lib/i18n';
 import type { Generation } from '@/types/models';
 
 defineProps<{ generation: Generation }>();
@@ -12,10 +13,12 @@ defineProps<{ generation: Generation }>();
     </template>
     <template v-else-if="generation.status === 'failed'">
         <span class="text-gray-500">$0.00</span>
-        <span class="block text-xs text-gray-500">Not charged</span>
+        <span class="block text-xs text-gray-500">{{ t('Not charged') }}</span>
     </template>
     <template v-else>
         <span class="text-gray-400" aria-hidden="true">—</span>
-        <span class="block text-xs text-gray-500">When it finishes</span>
+        <span class="block text-xs text-gray-500">{{
+            t('When it finishes')
+        }}</span>
     </template>
 </template>

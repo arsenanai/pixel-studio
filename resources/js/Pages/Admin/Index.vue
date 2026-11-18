@@ -4,7 +4,8 @@ import Pagination from '@/Components/Pagination.vue';
 import SpendChart from '@/Components/SpendChart.vue';
 import SpendTable, { type SpendRow } from '@/Components/SpendTable.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { intlLocale, t, tc } from '@/lib/i18n';
+import { formatDay } from '@/lib/format';
+import { t, tc } from '@/lib/i18n';
 import type {
     Page,
     Reconciliation,
@@ -105,21 +106,10 @@ const exportUrl = computed(() =>
     route('admin.export', params({ q: null, sort: null })),
 );
 
-const longDate = computed(
-    () =>
-        new Intl.DateTimeFormat(intlLocale(), {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            timeZone: 'UTC',
-        }),
-);
-
 const dayRows = computed<SpendRow[]>(() =>
     [...props.days].reverse().map((day) => ({
         key: day.date,
-        label: longDate.value.format(new Date(day.date)),
+        label: formatDay(day.date, 'long'),
         totals: day.totals,
     })),
 );

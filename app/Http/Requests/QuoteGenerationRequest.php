@@ -33,9 +33,9 @@ class QuoteGenerationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'reference_images.max' => 'Pixelforge accepts at most :max reference images.',
-            'reference_images.*.url' => 'Enter a full http:// or https:// image URL.',
-            'reference_images.*.distinct' => 'This URL is already in the list.',
+            'reference_images.max' => __('Pixelforge accepts at most :max reference images.'),
+            'reference_images.*.url' => __('Enter a full http:// or https:// image URL.'),
+            'reference_images.*.distinct' => __('This URL is already in the list.'),
         ];
     }
 

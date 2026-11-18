@@ -12,8 +12,8 @@ enum CreditTransactionType: string
     public function label(): string
     {
         return match ($this) {
-            self::Purchase => 'Credits bought',
-            self::Charge => 'Image generated',
+            self::Purchase => __('Credits bought'),
+            self::Charge => __('Image generated'),
         };
     }
 }

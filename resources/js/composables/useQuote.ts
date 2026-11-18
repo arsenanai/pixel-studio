@@ -1,4 +1,5 @@
 import { isQuoteResponse } from '@/lib/guards';
+import { t } from '@/lib/i18n';
 import type { QuoteResponse } from '@/types/models';
 import axios from 'axios';
 import { onBeforeUnmount, ref, watch, type Ref } from 'vue';
@@ -79,11 +80,11 @@ function messageFor(failure: unknown): string {
         const status = failure.response?.status;
 
         if (status === 422) {
-            return 'Fix the highlighted fields to see a price.';
+            return t('Fix the highlighted fields to see a price.');
         }
 
         if (status === 429) {
-            return 'Too many price checks. Pause for a moment.';
+            return t('Too many price checks. Pause for a moment.');
         }
 
         const data: unknown = failure.response?.data;
@@ -98,5 +99,5 @@ function messageFor(failure: unknown): string {
         }
     }
 
-    return 'Could not load a price. Check your connection and try again.';
+    return t('Could not load a price. Check your connection and try again.');
 }
