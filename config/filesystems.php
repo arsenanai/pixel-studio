@@ -28,6 +28,8 @@ return [
     |
     */
 
+    'images_disk' => env('IMAGES_DISK', 'local'),
+
     'disks' => [
 
         'local' => [

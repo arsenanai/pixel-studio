@@ -43,6 +43,9 @@ export interface Option {
     value: string;
     label: string;
     hint?: string;
+    width?: number;
+    height?: number;
+    level?: number;
 }
 
 export type GenerationStatus = 'queued' | 'processing' | 'succeeded' | 'failed';

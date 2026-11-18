@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import BrandMark from '@/Components/BrandMark.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import FlashMessage from '@/Components/FlashMessage.vue';
+import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
+import { forgetAllDrafts } from '@/composables/useDraft';
+import { t } from '@/lib/i18n';
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -11,11 +15,11 @@ const page = usePage();
 const showingNavigationDropdown = ref(false);
 
 const links = computed(() => [
-    { label: 'Generate', name: 'generate' },
-    { label: 'History', name: 'history' },
-    { label: 'Credits', name: 'credits' },
+    { label: t('Generate'), name: 'generate' },
+    { label: t('History'), name: 'history' },
+    { label: t('Credits'), name: 'credits' },
     ...(page.props.auth.user.isAdmin
-        ? [{ label: 'Spend report', name: 'admin.report' }]
+        ? [{ label: t('Spend report'), name: 'admin.report' }]
         : []),
 ]);
 </script>
@@ -28,9 +32,9 @@ const links = computed(() => [
                     <div class="flex">
                         <Link
                             :href="route('generate')"
-                            class="flex shrink-0 items-center text-sm font-semibold tracking-tight text-gray-900"
+                            class="flex shrink-0 items-center text-sm"
                         >
-                            Pixel Studio
+                            <BrandMark />
                         </Link>
 
                         <div
@@ -55,9 +59,12 @@ const links = computed(() => [
                             :href="route('credits')"
                             class="rounded-md px-3 py-2 text-sm tabular-nums text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
-                            <span class="sr-only">Available credits:</span>
+                            <span class="sr-only">{{
+                                t('Available credits:')
+                            }}</span>
                             {{ page.props.credits.available.display }}
                         </Link>
+                        <LanguageSwitcher />
                         <Dropdown align="right" width="48">
                             <template #trigger>
                                 <button
@@ -81,15 +88,16 @@ const links = computed(() => [
                             </template>
 
                             <template #content>
-                                <DropdownLink :href="route('profile.edit')"
-                                    >Profile</DropdownLink
-                                >
+                                <DropdownLink :href="route('profile.edit')">{{
+                                    t('Profile')
+                                }}</DropdownLink>
                                 <DropdownLink
                                     :href="route('logout')"
                                     method="post"
                                     as="button"
+                                    @click="forgetAllDrafts"
                                 >
-                                    Log out
+                                    {{ t('Log out') }}
                                 </DropdownLink>
                             </template>
                         </Dropdown>
@@ -106,7 +114,7 @@ const links = computed(() => [
                                     !showingNavigationDropdown
                             "
                         >
-                            <span class="sr-only">Menu</span>
+                            <span class="sr-only">{{ t('Menu') }}</span>
                             <svg
                                 class="h-6 w-6"
                                 stroke="currentColor"
@@ -161,16 +169,20 @@ const links = computed(() => [
                     </div>
 
                     <div class="mt-3 space-y-1">
-                        <ResponsiveNavLink :href="route('profile.edit')"
-                            >Profile</ResponsiveNavLink
-                        >
+                        <ResponsiveNavLink :href="route('profile.edit')">{{
+                            t('Profile')
+                        }}</ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('logout')"
                             method="post"
                             as="button"
+                            @click="forgetAllDrafts"
                         >
-                            Log out
+                            {{ t('Log out') }}
                         </ResponsiveNavLink>
+                        <div class="px-4 pt-2">
+                            <LanguageSwitcher />
+                        </div>
                     </div>
                 </div>
             </div>

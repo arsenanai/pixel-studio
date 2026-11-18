@@ -9,6 +9,7 @@ use App\Data\Pixelforge\PixelforgeGeneration;
 use App\Enums\CreditTransactionType;
 use App\Enums\GenerationStatus;
 use App\Exceptions\InvalidPixelforgePayload;
+use App\Jobs\StoreGenerationImage;
 use App\Models\CreditTransaction;
 use App\Models\Generation;
 use App\ValueObjects\Money;
@@ -114,6 +115,10 @@ final readonly class ApplyGenerationUpdate
 
         CreditTransaction::record($row->user_id, CreditTransactionType::Charge, Money::zero()->subtract($charge), $row->id);
         ($this->recordDailySpend)($row);
+
+        if ($row->image_url !== null) {
+            StoreGenerationImage::dispatch($row->id);
+        }
 
         if ($charge->isGreaterThan($row->estimated_max_charge_nano)) {
             Log::warning('pixelforge.pricing.above_estimate', [

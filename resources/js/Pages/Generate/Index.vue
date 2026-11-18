@@ -2,11 +2,13 @@
 import CostPanel from '@/Components/CostPanel.vue';
 import InputError from '@/Components/InputError.vue';
 import SegmentedControl from '@/Components/SegmentedControl.vue';
+import { useDraft } from '@/composables/useDraft';
 import { useQuote } from '@/composables/useQuote';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { formatTokens } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Option } from '@/types/models';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, ref } from 'vue';
 
 const props = defineProps<{
@@ -15,12 +17,57 @@ const props = defineProps<{
     limits: { promptMaxCharacters: number; referenceImagesMax: number };
 }>();
 
+const DEFAULTS = { size: '1024x1024', quality: 'medium' };
+
 const form = useForm({
     prompt: '',
-    size: '1024x1024',
-    quality: 'medium',
+    size: DEFAULTS.size,
+    quality: DEFAULTS.quality,
     reference_images: [] as string[],
 });
+
+type Draft = {
+    prompt: string;
+    size: string;
+    quality: string;
+    reference_images: string[];
+};
+
+const draft = useDraft<Draft>({
+    key: String(usePage().props.auth.user.id),
+    source: () => ({
+        prompt: form.prompt,
+        size: form.size,
+        quality: form.quality,
+        reference_images: [...form.reference_images],
+    }),
+    isEmpty: (value) =>
+        value.prompt.trim() === '' &&
+        value.reference_images.every((url) => url.trim() === '') &&
+        value.size === DEFAULTS.size &&
+        value.quality === DEFAULTS.quality,
+    restore: (saved) => {
+        if (typeof saved.prompt === 'string') {
+            form.prompt = saved.prompt;
+        }
+        if (props.sizes.some((option) => option.value === saved.size)) {
+            form.size = saved.size as string;
+        }
+        if (props.qualities.some((option) => option.value === saved.quality)) {
+            form.quality = saved.quality as string;
+        }
+        if (Array.isArray(saved.reference_images)) {
+            form.reference_images = saved.reference_images
+                .filter((url): url is string => typeof url === 'string')
+                .slice(0, props.limits.referenceImagesMax);
+        }
+    },
+});
+
+function discardDraft(): void {
+    draft.discard();
+    form.reset();
+}
 
 const characters = computed(() => [...form.prompt].length);
 const overLimit = computed(
@@ -59,9 +106,9 @@ const canSubmit = computed(
 );
 
 const submitLabel = computed(() => {
-    if (form.processing) return 'Sending…';
-    if (state.value === 'loading') return 'Updating price…';
-    return 'Generate image';
+    if (form.processing) return t('Sending...');
+    if (state.value === 'loading') return t('Updating price...');
+    return t('Generate image');
 });
 
 const referenceInputs = ref<HTMLInputElement[]>([]);
@@ -83,7 +130,10 @@ function fieldError(key: string): string | undefined {
 function submit(): void {
     form.post(route('generations.store'), {
         preserveScroll: true,
-        onSuccess: () => form.reset('prompt', 'reference_images'),
+        onSuccess: () => {
+            draft.discard();
+            form.reset('prompt', 'reference_images');
+        },
         onError: async () => {
             await nextTick();
             document
@@ -95,41 +145,70 @@ function submit(): void {
 </script>
 
 <template>
-    <Head title="Generate" />
+    <Head :title="t('Generate')" />
 
     <AuthenticatedLayout>
         <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
             <header class="max-w-2xl">
                 <h1 class="text-2xl font-semibold tracking-tight text-gray-900">
-                    New image
+                    {{ t('New image') }}
                 </h1>
                 <p class="mt-1 text-sm text-gray-600">
-                    You'll see the price range before you submit and pay the
-                    exact cost once it's done.
+                    {{
+                        t(
+                            "You'll see the price range before you submit and pay the exact cost once it's done.",
+                        )
+                    }}
                 </p>
             </header>
+
+            <div
+                v-if="draft.restored.value"
+                class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950"
+                role="status"
+            >
+                <p>{{ t('We restored the draft you were working on.') }}</p>
+                <button
+                    type="button"
+                    class="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    @click="discardDraft"
+                >
+                    {{ t('Start over') }}
+                </button>
+            </div>
 
             <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
                 <form class="space-y-8" novalidate @submit.prevent="submit">
                     <div>
-                        <div class="flex items-baseline justify-between">
+                        <div class="flex items-baseline justify-between gap-3">
                             <label
                                 for="prompt"
                                 class="text-sm font-medium text-gray-900"
                             >
-                                Prompt
+                                {{ t('Prompt') }}
                             </label>
-                            <span
-                                id="prompt-count"
-                                class="text-xs tabular-nums"
-                                :class="
-                                    overLimit
-                                        ? 'font-medium text-red-700'
-                                        : 'text-gray-500'
-                                "
-                            >
-                                {{ formatTokens(characters) }} /
-                                {{ formatTokens(limits.promptMaxCharacters) }}
+                            <span class="flex items-baseline gap-3 text-xs">
+                                <span
+                                    v-if="draft.savedAt.value"
+                                    class="text-gray-500"
+                                    aria-live="polite"
+                                >
+                                    {{ t('Draft saved') }}
+                                </span>
+                                <span
+                                    id="prompt-count"
+                                    class="tabular-nums"
+                                    :class="
+                                        overLimit
+                                            ? 'font-medium text-red-700'
+                                            : 'text-gray-500'
+                                    "
+                                >
+                                    {{ formatTokens(characters) }} /
+                                    {{
+                                        formatTokens(limits.promptMaxCharacters)
+                                    }}
+                                </span>
                             </span>
                         </div>
                         <textarea
@@ -137,7 +216,11 @@ function submit(): void {
                             v-model="form.prompt"
                             rows="5"
                             autofocus
-                            placeholder="A lighthouse on a cliff at dawn, oil painting"
+                            :placeholder="
+                                t(
+                                    'A lighthouse on a cliff at dawn, oil painting',
+                                )
+                            "
                             class="mt-2 block w-full resize-y rounded-md border-gray-300 text-sm leading-6 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             :aria-invalid="
                                 form.errors.prompt || overLimit
@@ -156,7 +239,7 @@ function submit(): void {
                     <SegmentedControl
                         v-model="form.size"
                         name="size"
-                        legend="Size"
+                        :legend="t('Size')"
                         :options="sizes"
                     />
                     <InputError :message="form.errors.size" />
@@ -164,22 +247,25 @@ function submit(): void {
                     <SegmentedControl
                         v-model="form.quality"
                         name="quality"
-                        legend="Quality"
+                        :legend="t('Quality')"
                         :options="qualities"
                     />
                     <InputError :message="form.errors.quality" />
 
                     <fieldset>
                         <legend class="text-sm font-medium text-gray-900">
-                            Reference images
-                            <span class="font-normal text-gray-500"
-                                >(optional)</span
-                            >
+                            {{ t('Reference images') }}
+                            <span class="font-normal text-gray-500">{{
+                                t('(optional)')
+                            }}</span>
                         </legend>
                         <p class="mt-1 text-xs text-gray-500">
-                            Image URLs to guide the style. Pixelforge bills each
-                            as 765 input tokens, up to
-                            {{ limits.referenceImagesMax }}.
+                            {{
+                                t(
+                                    'Image URLs to guide the style. Pixelforge bills each as 765 input tokens, up to :max.',
+                                    { max: limits.referenceImagesMax },
+                                )
+                            }}
                         </p>
 
                         <ul
@@ -195,7 +281,11 @@ function submit(): void {
                                         :for="`reference-${index}`"
                                         class="sr-only"
                                     >
-                                        Reference image {{ index + 1 }} URL
+                                        {{
+                                            t('Reference image :number URL', {
+                                                number: index + 1,
+                                            })
+                                        }}
                                     </label>
                                     <input
                                         :id="`reference-${index}`"
@@ -219,10 +309,12 @@ function submit(): void {
                                         class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                         @click="removeReference(index)"
                                     >
-                                        <span class="sr-only"
-                                            >Remove reference image
-                                            {{ index + 1 }}</span
-                                        >
+                                        <span class="sr-only">{{
+                                            t(
+                                                'Remove reference image :number',
+                                                { number: index + 1 },
+                                            )
+                                        }}</span>
                                         <svg
                                             class="h-4 w-4"
                                             viewBox="0 0 20 20"
@@ -258,7 +350,7 @@ function submit(): void {
                             class="mt-3 inline-flex min-h-11 items-center rounded-md px-1 text-sm font-medium text-indigo-700 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             @click="addReference"
                         >
-                            + Add a reference image
+                            {{ t('+ Add a reference image') }}
                         </button>
                     </fieldset>
 
@@ -275,20 +367,22 @@ function submit(): void {
                                 {{ fieldError('credits') }}
                             </p>
                             <p v-else-if="quote">
-                                This image could cost up to
-                                <span class="tabular-nums">{{
-                                    quote.charge.max.display
-                                }}</span>, and you have
-                                <span class="tabular-nums">{{
-                                    quote.credits.available.display
-                                }}</span>
-                                available.
+                                {{
+                                    t(
+                                        'This image could cost up to :max, and you have :available available.',
+                                        {
+                                            max: quote.charge.max.display,
+                                            available:
+                                                quote.credits.available.display,
+                                        },
+                                    )
+                                }}
                             </p>
                             <Link
                                 :href="route('credits')"
                                 class="mt-1 inline-block font-medium underline hover:no-underline"
                             >
-                                Buy credits
+                                {{ t('Buy credits') }}
                             </Link>
                         </div>
                         <button
@@ -302,14 +396,15 @@ function submit(): void {
                             v-if="quote && state === 'ready'"
                             class="mt-2 text-xs text-gray-500"
                         >
-                            You'll pay between
-                            <span class="tabular-nums">{{
-                                quote.charge.min.display
-                            }}</span>
-                            and
-                            <span class="tabular-nums">{{
-                                quote.charge.max.display
-                            }}</span>, or nothing if it fails.
+                            {{
+                                t(
+                                    "You'll pay between :min and :max, or nothing if it fails.",
+                                    {
+                                        min: quote.charge.min.display,
+                                        max: quote.charge.max.display,
+                                    },
+                                )
+                            }}
                         </p>
                     </div>
                 </form>

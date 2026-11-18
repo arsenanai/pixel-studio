@@ -13,10 +13,20 @@ enum ImageSize: string
     public function label(): string
     {
         return match ($this) {
-            self::Square => 'Square',
-            self::Landscape => 'Landscape',
-            self::Portrait => 'Portrait',
+            self::Square => __('Square'),
+            self::Landscape => __('Landscape'),
+            self::Portrait => __('Portrait'),
         };
+    }
+
+    public function width(): int
+    {
+        return (int) explode('x', $this->value)[0];
+    }
+
+    public function height(): int
+    {
+        return (int) explode('x', $this->value)[1];
     }
 
     public function dimensions(): string

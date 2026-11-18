@@ -1,22 +1,26 @@
 <script setup lang="ts">
+import { t } from '@/lib/i18n';
 import type { Generation } from '@/types/models';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{ generation: Generation; size: 'sm' | 'lg' }>();
 
 const failedToLoad = ref(false);
+const loaded = ref(false);
 
 const url = computed(() =>
     failedToLoad.value ? null : (props.generation.image?.url ?? null),
 );
+
+watch(url, () => (loaded.value = false));
 
 const placeholder = computed(
     () =>
         ({
             queued: null,
             processing: null,
-            failed: 'No image',
-            succeeded: 'Expired',
+            failed: t('No image'),
+            succeeded: t('Expired'),
         })[props.generation.status],
 );
 
@@ -32,16 +36,20 @@ const box = computed(() =>
         target="_blank"
         rel="noopener"
         class="block shrink-0 overflow-hidden rounded-md bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        :class="box"
+        :class="[box, { 'animate-pulse motion-reduce:animate-none': !loaded }]"
+        :aria-busy="!loaded"
     >
         <img
             :src="url"
-            :alt="`Generated image: ${generation.prompt}`"
+            :alt="t('Generated image: :prompt', { prompt: generation.prompt })"
             loading="lazy"
-            class="h-full w-full object-cover"
+            decoding="async"
+            class="h-full w-full object-cover transition-opacity duration-300 motion-reduce:transition-none"
+            :class="loaded ? 'opacity-100' : 'opacity-0'"
+            @load="loaded = true"
             @error="failedToLoad = true"
         />
-        <span class="sr-only">(opens full size in a new tab)</span>
+        <span class="sr-only">{{ t('(opens full size in a new tab)') }}</span>
     </a>
     <div
         v-else

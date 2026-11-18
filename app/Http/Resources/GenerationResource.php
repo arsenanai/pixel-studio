@@ -35,10 +35,17 @@ final class GenerationResource extends JsonResource
                 'max' => $generation->estimated_max_charge_nano,
             ],
             'charge' => $generation->charge_nano,
-            'image' => $generation->image_url === null ? null : [
-                'url' => $expired ? null : $generation->image_url,
-                'expiresAt' => $generation->image_url_expires_at?->toIso8601ZuluString(),
-            ],
+            'image' => match (true) {
+                $generation->image_path !== null => [
+                    'url' => route('generations.image', $generation),
+                    'expiresAt' => null,
+                ],
+                $generation->image_url !== null => [
+                    'url' => $expired ? null : $generation->image_url,
+                    'expiresAt' => $generation->image_url_expires_at?->toIso8601ZuluString(),
+                ],
+                default => null,
+            },
             'error' => $generation->error_message,
             'createdAt' => $generation->created_at->toIso8601ZuluString(),
             'completedAt' => $generation->completed_at?->toIso8601ZuluString(),
@@ -49,11 +56,11 @@ final class GenerationResource extends JsonResource
     {
         return match ($generation->status) {
             GenerationStatus::Queued => $generation->provider_job_id === null && $generation->submit_attempts > 1
-                ? 'Waiting for Pixelforge'
-                : 'Queued',
-            GenerationStatus::Processing => 'Generating',
-            GenerationStatus::Succeeded => 'Done',
-            GenerationStatus::Failed => 'Failed',
+                ? __('Waiting for Pixelforge')
+                : __('Queued'),
+            GenerationStatus::Processing => __('Generating'),
+            GenerationStatus::Succeeded => __('Done'),
+            GenerationStatus::Failed => __('Failed'),
         };
     }
 }

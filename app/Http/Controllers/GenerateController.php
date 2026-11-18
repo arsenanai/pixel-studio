@@ -25,10 +25,14 @@ final class GenerateController
                 'value' => $size->value,
                 'label' => $size->label(),
                 'hint' => $size->dimensions(),
+                'width' => $size->width(),
+                'height' => $size->height(),
             ], ImageSize::cases()),
             'qualities' => array_map(fn (ImageQuality $quality) => [
                 'value' => $quality->value,
                 'label' => $quality->label(),
+                'hint' => $quality->hint(),
+                'level' => $quality->level(),
             ], ImageQuality::cases()),
             'limits' => [
                 'promptMaxCharacters' => QuoteGenerationRequest::PROMPT_MAX_CHARACTERS,
@@ -45,6 +49,6 @@ final class GenerateController
             return back()->withErrors(['credits' => $insufficient->getMessage()]);
         }
 
-        return to_route('history')->with('success', 'Sent to Pixelforge. You will be charged the exact cost when it finishes, and nothing if it fails.');
+        return to_route('history')->with('success', __('Sent to Pixelforge. You will be charged the exact cost when it finishes, and nothing if it fails.'));
     }
 }

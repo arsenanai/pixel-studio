@@ -12,6 +12,28 @@ enum ImageQuality: string
 
     public function label(): string
     {
-        return ucfirst($this->value);
+        return match ($this) {
+            self::Low => __('Low'),
+            self::Medium => __('Medium'),
+            self::High => __('High'),
+        };
+    }
+
+    public function hint(): string
+    {
+        return match ($this) {
+            self::Low => __('Quick drafts'),
+            self::Medium => __('Balanced'),
+            self::High => __('Finest detail'),
+        };
+    }
+
+    public function level(): int
+    {
+        return match ($this) {
+            self::Low => 1,
+            self::Medium => 2,
+            self::High => 3,
+        };
     }
 }

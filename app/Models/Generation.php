@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property TokenRates|null $rates
  * @property string|null $image_url
  * @property CarbonImmutable|null $image_url_expires_at
+ * @property string|null $image_path
  * @property int|null $usage_input_text_tokens
  * @property int|null $usage_input_image_tokens
  * @property int|null $usage_output_tokens

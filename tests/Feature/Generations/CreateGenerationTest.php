@@ -92,8 +92,9 @@ it('shows the generate form with every size and quality Pixelforge offers', func
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('Generate/Index')
             ->has('sizes', 3)
-            ->where('sizes.1', ['value' => '1536x1024', 'label' => 'Landscape', 'hint' => '1536×1024'])
+            ->where('sizes.1', ['value' => '1536x1024', 'label' => 'Landscape', 'hint' => '1536×1024', 'width' => 1536, 'height' => 1024])
             ->has('qualities', 3)
+            ->where('qualities.2', ['value' => 'high', 'label' => 'High', 'hint' => 'Finest detail', 'level' => 3])
             ->where('limits.promptMaxCharacters', 4_000)
             ->where('auth.user.isAdmin', false)
             ->missing('auth.user.password'));
