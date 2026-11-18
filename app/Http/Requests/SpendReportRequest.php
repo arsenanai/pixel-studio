@@ -57,7 +57,7 @@ final class SpendReportRequest extends FormRequest
 
     public function filteredUser(): ?User
     {
-        return $this->filled('user') ? User::query()->find($this->integer('user')) : null;
+        return $this->filled('user') ? User::withTrashed()->find($this->integer('user')) : null;
     }
 
     public function search(): string

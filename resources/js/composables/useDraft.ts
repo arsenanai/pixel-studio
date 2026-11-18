@@ -31,7 +31,7 @@ export function useDraft<T extends object>(options: {
     source: WatchSource<T>;
     isEmpty: (value: T) => boolean;
     restore: (value: Partial<T>) => void;
-    skipRestore?: boolean;
+    leaveSavedDraftAlone?: boolean;
 }) {
     const key = PREFIX + options.key;
     const restored = ref(false);
@@ -68,8 +68,12 @@ export function useDraft<T extends object>(options: {
     }
 
     onMounted(() => {
+        if (options.leaveSavedDraftAlone) {
+            return;
+        }
+
         try {
-            const saved = options.skipRestore ? null : storage()?.getItem(key);
+            const saved = storage()?.getItem(key);
 
             if (saved) {
                 const parsed: unknown = JSON.parse(saved);

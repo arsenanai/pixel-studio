@@ -41,7 +41,7 @@ type Draft = {
 
 const draft = useDraft<Draft>({
     key: String(usePage().props.auth.user.id),
-    skipRestore: props.prefill !== null,
+    leaveSavedDraftAlone: props.prefill !== null,
     source: () => ({
         prompt: form.prompt,
         size: form.size,
@@ -135,15 +135,16 @@ function fieldError(key: string): string | undefined {
 }
 
 function submit(): void {
-    form.transform((data) => ({
-        ...data,
-        reference_images: data.reference_images
-            .map((url) => url.trim())
-            .filter((url) => url !== ''),
-    })).post(route('generations.store'), {
+    form.reference_images = form.reference_images
+        .map((url) => url.trim())
+        .filter((url) => url !== '');
+
+    form.post(route('generations.store'), {
         preserveScroll: true,
         onSuccess: () => {
-            draft.discard();
+            if (props.prefill === null) {
+                draft.discard();
+            }
             form.reset('prompt', 'reference_images');
         },
         onError: async () => {

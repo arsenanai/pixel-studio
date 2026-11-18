@@ -27,10 +27,12 @@ final class CreditsController
         $request->validate(['type' => ['nullable', Rule::enum(CreditTransactionType::class)]]);
         $type = $request->enum('type', CreditTransactionType::class);
 
+        $credits = $user->credits();
+
         return Inertia::render('Credits/Index', [
-            'balance' => $user->creditBalance(),
-            'held' => $user->heldCredits(),
-            'available' => $user->availableCredits(),
+            'balance' => $credits->balance,
+            'held' => $credits->held,
+            'available' => $credits->available(),
             'packs' => array_map(fn (int $dollars) => [
                 'dollars' => $dollars,
                 'amount' => Money::fromNano($dollars * Money::NANO_PER_DOLLAR),

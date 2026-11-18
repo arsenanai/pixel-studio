@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Data\CreditSummary;
 use App\Enums\GenerationStatus;
 use App\ValueObjects\Money;
 use Database\Factories\UserFactory;
@@ -34,6 +35,8 @@ class User extends Authenticatable
         'email',
         'password',
     ];
+
+    public const CLOSED_ACCOUNT_NAME = 'Closed account';
 
     protected $attributes = [
         'is_admin' => false,
@@ -66,26 +69,34 @@ class User extends Authenticatable
         return $this->hasMany(CreditTransaction::class);
     }
 
-    public function creditBalance(): Money
-    {
-        return Money::fromDatabase($this->creditTransactions()->toBase()->selectRaw('COALESCE(SUM(amount_nano), 0) as total')->value('total'));
-    }
-
-    public function heldCredits(): Money
-    {
-        return Money::fromDatabase($this->generations()->pending()->toBase()->selectRaw('COALESCE(SUM(estimated_max_charge_nano), 0) as total')->value('total'));
-    }
-
-    public function availableCredits(): Money
+    public function credits(): CreditSummary
     {
         $pending = array_map(fn (GenerationStatus $status) => $status->value, [GenerationStatus::Queued, GenerationStatus::Processing]);
 
         $row = DB::selectOne(
-            'SELECT (SELECT COALESCE(SUM(amount_nano), 0) FROM credit_transactions WHERE user_id = ?)'
-            .' - (SELECT COALESCE(SUM(estimated_max_charge_nano), 0) FROM generations WHERE user_id = ? AND status IN (?, ?)) AS available',
+            'SELECT (SELECT COALESCE(SUM(amount_nano), 0) FROM credit_transactions WHERE user_id = ?) AS balance,'
+            .' (SELECT COALESCE(SUM(estimated_max_charge_nano), 0) FROM generations WHERE user_id = ? AND status IN (?, ?)) AS held',
             [$this->id, $this->id, ...$pending],
         );
 
-        return Money::fromDatabase(is_object($row) ? ($row->available ?? null) : null);
+        return new CreditSummary(
+            Money::fromDatabase(is_object($row) ? ($row->balance ?? null) : null),
+            Money::fromDatabase(is_object($row) ? ($row->held ?? null) : null),
+        );
+    }
+
+    public function creditBalance(): Money
+    {
+        return $this->credits()->balance;
+    }
+
+    public function heldCredits(): Money
+    {
+        return $this->credits()->held;
+    }
+
+    public function availableCredits(): Money
+    {
+        return $this->credits()->available();
     }
 }

@@ -48,8 +48,8 @@ final readonly class SpendReport
     {
         $query = $this->totals($this->range($from, $to))
             ->join('users', 'users.id', '=', 'daily_spend.user_id')
-            ->addSelect('users.id as user_id', 'users.name', 'users.email')
-            ->groupBy('users.id', 'users.name', 'users.email')
+            ->addSelect('users.id as user_id', 'users.name', 'users.email', 'users.deleted_at')
+            ->groupBy('users.id', 'users.name', 'users.email', 'users.deleted_at')
             ->orderByRaw($sort->expression().' DESC')
             ->orderBy('users.id');
 
@@ -70,7 +70,7 @@ final readonly class SpendReport
     {
         return $this->range($from, $to, $userId)
             ->join('users', 'users.id', '=', 'daily_spend.user_id')
-            ->select('daily_spend.*', 'users.name', 'users.email')
+            ->select('daily_spend.*', 'users.name', 'users.email', 'users.deleted_at')
             ->orderBy('daily_spend.day')
             ->orderBy('daily_spend.user_id')
             ->cursor()
@@ -117,7 +117,7 @@ final readonly class SpendReport
     {
         return [
             'id' => $this->integer($row->user_id ?? null),
-            'name' => $this->text($row->name ?? null),
+            'name' => ($row->deleted_at ?? null) === null ? $this->text($row->name ?? null) : __('Closed account'),
             'email' => $this->text($row->email ?? null),
         ];
     }

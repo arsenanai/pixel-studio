@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Generations;
 
 use App\Enums\PixelforgeErrorCode;
+use App\Enums\PollOutcome;
 use App\Exceptions\InvalidPixelforgePayload;
 use App\Exceptions\PixelforgeRequestFailed;
 use App\Exceptions\PixelforgeUnreachable;
@@ -55,37 +56,7 @@ final readonly class PollPendingGenerations
 
         foreach ($generations as $generation) {
             try {
-                $snapshot = $this->client->generation((string) $generation->provider_job_id);
-            } catch (PixelforgeRequestFailed $failure) {
-                if ($failure->isRetryable()) {
-                    break;
-                }
-
-                if ($failure->is(PixelforgeErrorCode::NotFound) && $this->missingForTooLong($generation, $now)) {
-                    $this->apply->failUnknownToPixelforge($generation);
-
-                    continue;
-                }
-
-                Log::error('pixelforge.poll.failed', [
-                    'generation_id' => $generation->id,
-                    'status' => $failure->status,
-                    'code' => $failure->errorCode?->value,
-                ]);
-                $generation->touch();
-
-                continue;
-            } catch (PixelforgeUnreachable) {
-                break;
-            } catch (InvalidPixelforgePayload $invalid) {
-                Log::warning('pixelforge.poll.invalid_payload', ['generation_id' => $generation->id, 'reason' => $invalid->getMessage()]);
-                $generation->touch();
-
-                continue;
-            }
-
-            try {
-                $applied = ($this->apply)($generation, $snapshot);
+                $outcome = $this->pollOne($generation, $now);
             } catch (Throwable $exception) {
                 report($exception);
                 Log::error('pixelforge.poll.apply_failed', ['generation_id' => $generation->id, 'reason' => $exception->getMessage()]);
@@ -94,14 +65,55 @@ final readonly class PollPendingGenerations
                 continue;
             }
 
-            if ($applied->updated_at->equalTo($generation->updated_at)) {
-                $applied->touch();
+            if ($outcome === PollOutcome::StopForNow) {
+                break;
             }
 
-            $polled++;
+            $polled += $outcome === PollOutcome::Updated ? 1 : 0;
         }
 
         return $polled;
+    }
+
+    private function pollOne(Generation $generation, CarbonImmutable $now): PollOutcome
+    {
+        try {
+            $snapshot = $this->client->generation((string) $generation->provider_job_id);
+        } catch (PixelforgeRequestFailed $failure) {
+            if ($failure->isRetryable()) {
+                return PollOutcome::StopForNow;
+            }
+
+            if ($failure->is(PixelforgeErrorCode::NotFound) && $this->missingForTooLong($generation, $now)) {
+                $this->apply->failUnknownToPixelforge($generation);
+
+                return PollOutcome::Updated;
+            }
+
+            Log::error('pixelforge.poll.failed', [
+                'generation_id' => $generation->id,
+                'status' => $failure->status,
+                'code' => $failure->errorCode?->value,
+            ]);
+            $generation->touch();
+
+            return PollOutcome::Skipped;
+        } catch (PixelforgeUnreachable) {
+            return PollOutcome::StopForNow;
+        } catch (InvalidPixelforgePayload $invalid) {
+            Log::warning('pixelforge.poll.invalid_payload', ['generation_id' => $generation->id, 'reason' => $invalid->getMessage()]);
+            $generation->touch();
+
+            return PollOutcome::Skipped;
+        }
+
+        $applied = ($this->apply)($generation, $snapshot);
+
+        if ($applied->updated_at->equalTo($generation->updated_at)) {
+            $applied->touch();
+        }
+
+        return PollOutcome::Updated;
     }
 
     private function missingForTooLong(Generation $generation, CarbonImmutable $now): bool

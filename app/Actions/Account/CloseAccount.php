@@ -13,7 +13,7 @@ final readonly class CloseAccount
     public function __invoke(User $user): void
     {
         DB::transaction(function () use ($user): void {
-            $user->name = __('Closed account');
+            $user->name = User::CLOSED_ACCOUNT_NAME;
             $user->email = "closed-{$user->id}@accounts.invalid";
             $user->password = Str::password(64);
             $user->remember_token = null;

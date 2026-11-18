@@ -38,7 +38,7 @@ final class SpendReportController
             'filters' => [
                 'q' => $request->search(),
                 'sort' => $request->sort()->value,
-                'user' => $user === null ? null : ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
+                'user' => $user === null ? null : ['id' => $user->id, 'name' => $user->trashed() ? __('Closed account') : $user->name, 'email' => $user->email],
             ],
             'source' => [
                 'environment' => app()->environment(),

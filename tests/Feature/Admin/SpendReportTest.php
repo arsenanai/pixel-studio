@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Account\CloseAccount;
 use App\Models\Generation;
 use App\Models\User;
 use App\ValueObjects\TokenUsage;
@@ -252,4 +253,25 @@ describe('export', function () {
     it('is only for operators', function () {
         $this->actingAs(User::factory()->create())->get('/admin/export')->assertForbidden();
     });
+});
+
+it('filters to a closed account instead of silently showing everyone', function () {
+    Http::fake(['*' => Http::response(usageReport('2026-10-19', '2026-11-17', []))]);
+    $closed = User::factory()->create(['name' => 'Gone']);
+    Generation::factory()->for($closed)->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-17 09:00:00'))->create();
+    Generation::factory()->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-17 10:00:00'))->create();
+    app(CloseAccount::class)($closed);
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->get("/admin?user={$closed->id}")
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('filters.user.name', 'Closed account')
+            ->where('total.succeeded', 1));
+
+    $this->actingAs(User::factory()->admin()->create(['locale' => 'kk']))
+        ->get('/admin')
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('users.data', fn ($rows) => collect($rows)->pluck('user.name')->contains('Жабылған аккаунт')));
+
+    expect(User::withTrashed()->find($closed->id)?->name)->toBe('Closed account');
 });
