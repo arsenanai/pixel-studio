@@ -62,7 +62,7 @@ it('refuses to store anything that is not a PNG', function () {
 it('does not try to fetch an image whose link has already expired', function () {
     $generation = Generation::factory()->succeeded(completedAt: CarbonImmutable::now()->subDays(2))->create();
 
-    (new StoreGenerationImage($generation->id))->handle('local');
+    (new StoreGenerationImage($generation->id))->handle('local', 'pixelforge.promptedit.dev');
 
     expect($generation->refresh()->image_path)->toBeNull();
     Http::assertNothingSent();
@@ -87,4 +87,30 @@ it('leaves images on Pixelforge when no durable disk is configured', function ()
 
     expect($generation->refresh()->image_path)->toBeNull();
     $this->artisan('pixelforge:store-images')->expectsOutputToContain('IMAGES_DISK is not set')->assertSuccessful();
+});
+
+it('only downloads images from Pixelforge over https', function (string $url) {
+    $generation = Generation::factory()->succeeded()->create([
+        'image_url' => $url,
+        'image_url_expires_at' => CarbonImmutable::now()->addHour(),
+    ]);
+
+    (new StoreGenerationImage($generation->id))->handle('local', 'pixelforge.promptedit.dev');
+
+    expect($generation->refresh()->image_path)->toBeNull();
+    Http::assertNothingSent();
+})->with([
+    'another host' => ['https://169.254.169.254/latest/meta-data'],
+    'a look-alike host' => ['https://pixelforge.promptedit.dev.evil.test/images/x.png'],
+    'plain http' => ['http://pixelforge.promptedit.dev/images/x.png'],
+]);
+
+it('gives up on an image larger than 20 MB without keeping it', function () {
+    Http::swap(new HttpFactory);
+    Http::preventStrayRequests();
+    Http::fake(['pixelforge.promptedit.dev/images/*' => Http::response("\x89PNG".str_repeat('x', StoreGenerationImage::MAX_BYTES), 200, ['Content-Type' => 'image/png'])]);
+
+    $generation = succeedWithFreshImage(Generation::factory()->processing()->create());
+
+    expect($generation->refresh()->image_path)->toBeNull();
 });

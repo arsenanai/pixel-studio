@@ -8,6 +8,7 @@ use App\Enums\GenerationStatus;
 use App\Enums\HistoryFilter;
 use App\Http\Resources\GenerationResource;
 use App\Models\User;
+use App\Support\Search;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -30,7 +31,7 @@ final class HistoryController
 
         $generations = $user->generations()
             ->whereIn('status', $filter->statuses())
-            ->when($search !== '', fn ($query) => $query->whereLike('prompt', "%{$search}%"))
+            ->when($search !== '', fn ($query) => Search::containsAny($query, ['prompt'], $search))
             ->latest()
             ->latest('id')
             ->paginate(self::PER_PAGE)

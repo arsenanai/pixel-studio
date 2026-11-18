@@ -14,6 +14,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Psr\Http\Message\StreamInterface;
 
 final class StoreGenerationImage implements ShouldBeUnique, ShouldQueueAfterCommit
 {
@@ -33,8 +34,10 @@ final class StoreGenerationImage implements ShouldBeUnique, ShouldQueueAfterComm
         return $this->generationId;
     }
 
-    public function handle(#[Config('filesystems.images_disk')] ?string $disk): void
-    {
+    public function handle(
+        #[Config('filesystems.images_disk')] ?string $disk,
+        #[Config('services.pixelforge.image_host')] string $imageHost,
+    ): void {
         if ($disk === null) {
             return;
         }
@@ -49,22 +52,29 @@ final class StoreGenerationImage implements ShouldBeUnique, ShouldQueueAfterComm
             return;
         }
 
+        if (! $this->isPixelforgeUrl($generation->image_url, $imageHost)) {
+            Log::warning('pixelforge.image.unexpected_host', ['generation_id' => $generation->id]);
+
+            return;
+        }
+
         try {
-            $response = Http::timeout(30)->get($generation->image_url);
+            $response = Http::timeout(30)
+                ->withOptions(['allow_redirects' => false, 'stream' => true])
+                ->get($generation->image_url);
         } catch (ConnectionException) {
             $this->release($this->backoff[$this->attempts() - 1] ?? 600);
 
             return;
         }
 
-        $body = $response->body();
+        $body = $response->successful() ? $this->readCapped($response->toPsrResponse()->getBody()) : null;
 
-        if ($response->failed() || $response->header('Content-Type') !== 'image/png' || strlen($body) > self::MAX_BYTES || ! str_starts_with($body, "\x89PNG")) {
+        if ($body === null || $response->header('Content-Type') !== 'image/png' || ! str_starts_with($body, "\x89PNG")) {
             Log::warning('pixelforge.image.not_stored', [
                 'generation_id' => $generation->id,
                 'status' => $response->status(),
                 'content_type' => $response->header('Content-Type'),
-                'bytes' => strlen($body),
             ]);
 
             if ($response->serverError()) {
@@ -78,5 +88,27 @@ final class StoreGenerationImage implements ShouldBeUnique, ShouldQueueAfterComm
         Storage::disk($disk)->put($path, $body);
 
         Generation::query()->whereKey($generation->id)->whereNull('image_path')->update(['image_path' => $path]);
+    }
+
+    private function isPixelforgeUrl(string $url, string $host): bool
+    {
+        return parse_url($url, PHP_URL_SCHEME) === 'https' && parse_url($url, PHP_URL_HOST) === $host;
+    }
+
+    private function readCapped(StreamInterface $stream): ?string
+    {
+        $body = '';
+
+        while (! $stream->eof()) {
+            $body .= $stream->read(64 * 1024);
+
+            if (strlen($body) > self::MAX_BYTES) {
+                $stream->close();
+
+                return null;
+            }
+        }
+
+        return $body;
     }
 }

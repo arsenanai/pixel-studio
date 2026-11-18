@@ -13,6 +13,7 @@ use App\Models\Generation;
 use App\Services\Pixelforge\PixelforgeClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final readonly class PollPendingGenerations
 {
@@ -60,11 +61,16 @@ final readonly class PollPendingGenerations
                     break;
                 }
 
+                if ($failure->is(PixelforgeErrorCode::NotFound) && $this->missingForTooLong($generation, $now)) {
+                    $this->apply->failUnknownToPixelforge($generation);
+
+                    continue;
+                }
+
                 Log::error('pixelforge.poll.failed', [
                     'generation_id' => $generation->id,
                     'status' => $failure->status,
                     'code' => $failure->errorCode?->value,
-                    'not_found' => $failure->is(PixelforgeErrorCode::NotFound),
                 ]);
                 $generation->touch();
 
@@ -78,7 +84,15 @@ final readonly class PollPendingGenerations
                 continue;
             }
 
-            $applied = ($this->apply)($generation, $snapshot);
+            try {
+                $applied = ($this->apply)($generation, $snapshot);
+            } catch (Throwable $exception) {
+                report($exception);
+                Log::error('pixelforge.poll.apply_failed', ['generation_id' => $generation->id, 'reason' => $exception->getMessage()]);
+                $generation->touch();
+
+                continue;
+            }
 
             if ($applied->updated_at->equalTo($generation->updated_at)) {
                 $applied->touch();
@@ -88,6 +102,11 @@ final readonly class PollPendingGenerations
         }
 
         return $polled;
+    }
+
+    private function missingForTooLong(Generation $generation, CarbonImmutable $now): bool
+    {
+        return ($generation->submitted_at ?? $generation->created_at)->lessThan($now->subMinutes(self::GIVE_UP_AFTER_MINUTES));
     }
 
     /** @return array{resubmitted: int, abandoned: int} */

@@ -6,6 +6,7 @@ namespace App\Actions\Admin;
 
 use App\Data\Reports\SpendTotals;
 use App\Enums\SpendSort;
+use App\Support\Search;
 use App\ValueObjects\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -53,9 +54,7 @@ final readonly class SpendReport
             ->orderBy('users.id');
 
         if ($search !== '') {
-            $query->where(fn (Builder $where) => $where
-                ->whereLike('users.name', "%{$search}%")
-                ->orWhereLike('users.email', "%{$search}%"));
+            Search::containsAny($query, ['users.name', 'users.email'], $search);
         }
 
         $page = $query->paginate($perPage)->withQueryString();

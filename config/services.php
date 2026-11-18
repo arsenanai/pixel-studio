@@ -40,7 +40,7 @@ return [
         'api_key' => (string) env('PIXELFORGE_API_KEY', ''),
         'signing_secret' => (string) env('PIXELFORGE_SIGNING_SECRET', ''),
         'webhook_tolerance' => (int) env('PIXELFORGE_WEBHOOK_TOLERANCE', 300),
-        'model' => (string) env('PIXELFORGE_MODEL', 'pixelforge'),
+        'image_host' => (string) env('PIXELFORGE_IMAGE_HOST', 'pixelforge.promptedit.dev'),
     ],
 
 ];

@@ -69,6 +69,18 @@ final readonly class ApplyGenerationUpdate
         });
     }
 
+    public function failUnknownToPixelforge(Generation $generation): Generation
+    {
+        return $this->locked($generation, function (Generation $row): void {
+            if ($row->status->isTerminal()) {
+                return;
+            }
+
+            Log::warning('pixelforge.generation.not_found', ['generation_id' => $row->id, 'provider_job_id' => $row->provider_job_id]);
+            $this->fail($row, 'not_found', 'Pixelforge has no record of this generation, so it was cancelled.', null, CarbonImmutable::now());
+        });
+    }
+
     /** @param Closure(Generation): void $apply */
     private function locked(Generation $generation, Closure $apply): Generation
     {

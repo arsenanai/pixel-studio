@@ -100,6 +100,39 @@ it('stops for this tick when Pixelforge cannot be reached', function () {
     expect($attempts)->toBe(1);
 });
 
+it('cancels a generation Pixelforge still cannot find after 30 minutes, for free', function () {
+    Http::fake(['pixelforge.test/v1/generations/*' => Http::response(pixelforgeFixture('error-not-found'), 404)]);
+    $generation = Generation::factory()->processing()->create([
+        'provider_job_id' => 'gen_missing',
+        'submitted_at' => CarbonImmutable::now()->subMinutes(31),
+        'updated_at' => CarbonImmutable::now()->subMinutes(2),
+    ]);
+
+    $this->artisan('pixelforge:poll');
+
+    expect($generation->refresh()->status)->toBe(GenerationStatus::Failed)
+        ->and($generation->error_code)->toBe('not_found')
+        ->and($generation->charge_nano?->nano)->toBe(0);
+});
+
+it('keeps going when applying one generation fails', function () {
+    Http::fake([
+        'pixelforge.test/v1/generations/gen_broken' => Http::response(pixelforgeFixture('generation-succeeded')),
+        'pixelforge.test/v1/generations/*' => Http::response(pixelforgeFixture('generation-succeeded')),
+    ]);
+    $broken = acceptedGeneration(quietSeconds: 300, providerId: 'gen_broken');
+    $healthy = acceptedGeneration(quietSeconds: 120);
+    Queue::fake();
+    $stale = Generation::factory()->create(['created_at' => CarbonImmutable::now()->subHour(), 'updated_at' => CarbonImmutable::now()->subHour()]);
+
+    $this->artisan('pixelforge:poll')->assertSuccessful();
+
+    expect($broken->refresh()->status)->toBe(GenerationStatus::Processing)
+        ->and($broken->updated_at->greaterThan(CarbonImmutable::now()->subSeconds(5)))->toBeTrue()
+        ->and($healthy->refresh()->status)->toBe(GenerationStatus::Succeeded)
+        ->and($stale->refresh()->status)->toBe(GenerationStatus::Failed);
+});
+
 it('keeps going past a generation Pixelforge cannot find', function () {
     Http::fake([
         'pixelforge.test/v1/generations/gen_missing' => Http::response(pixelforgeFixture('error-not-found'), 404),

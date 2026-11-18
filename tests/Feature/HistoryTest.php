@@ -141,3 +141,18 @@ describe('filters', function () {
             ->where('generations.links.next', fn (string $url) => str_contains($url, 'status=failed') && str_contains($url, 'page=2')));
     });
 });
+
+it('treats % and _ in a search as plain characters', function () {
+    $user = User::factory()->create();
+    Generation::factory()->for($user)->create(['prompt' => 'A 100% cotton shirt']);
+    Generation::factory()->for($user)->create(['prompt' => 'snake_case lettering']);
+    Generation::factory()->for($user)->create(['prompt' => 'A plain shirt']);
+
+    $this->actingAs($user)->get('/history?q=%25')->assertInertia(fn (AssertableInertia $page) => $page
+        ->has('generations.data', 1)
+        ->where('generations.data.0.prompt', 'A 100% cotton shirt'));
+
+    $this->actingAs($user)->get('/history?q=_')->assertInertia(fn (AssertableInertia $page) => $page
+        ->has('generations.data', 1)
+        ->where('generations.data.0.prompt', 'snake_case lettering'));
+});

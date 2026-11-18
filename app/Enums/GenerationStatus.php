@@ -24,9 +24,4 @@ enum GenerationStatus: string
     {
         return $this === self::Succeeded || $this === self::Failed;
     }
-
-    public function label(): string
-    {
-        return ucfirst($this->value);
-    }
 }

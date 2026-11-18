@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Actions\Admin\RebuildDailySpend;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -23,7 +23,18 @@ return new class extends Migration
             $table->index(['user_id', 'day']);
         });
 
-        app(RebuildDailySpend::class)();
+        DB::table('daily_spend')->insertUsing(
+            ['day', 'user_id', 'succeeded', 'failed', 'charged_nano', 'provider_cost_nano'],
+            DB::table('generations')
+                ->whereIn('status', ['succeeded', 'failed'])
+                ->whereNotNull('completed_at')
+                ->selectRaw('DATE(completed_at) as day, user_id')
+                ->selectRaw("SUM(CASE WHEN status = 'succeeded' THEN 1 ELSE 0 END) as succeeded")
+                ->selectRaw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed")
+                ->selectRaw('COALESCE(SUM(charge_nano), 0) as charged_nano')
+                ->selectRaw('COALESCE(SUM(provider_cost_nano), 0) as provider_cost_nano')
+                ->groupByRaw('DATE(completed_at), user_id'),
+        );
     }
 
     public function down(): void
