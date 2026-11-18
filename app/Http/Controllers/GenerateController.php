@@ -8,19 +8,32 @@ use App\Actions\Generations\CreateGeneration;
 use App\Enums\ImageQuality;
 use App\Enums\ImageSize;
 use App\Exceptions\InsufficientCredits;
+use App\Exceptions\TooManyPendingGenerations;
 use App\Http\Requests\QuoteGenerationRequest;
 use App\Http\Requests\StoreGenerationRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final class GenerateController
 {
-    public function create(): Response
+    public function create(Request $request, #[CurrentUser] User $user): Response
     {
+        $source = $request->filled('from') && Str::isUuid($request->string('from')->toString())
+            ? $user->generations()->find($request->string('from')->toString())
+            : null;
+
         return Inertia::render('Generate/Index', [
+            'prefill' => $source === null ? null : [
+                'prompt' => $source->prompt,
+                'size' => $source->size->value,
+                'quality' => $source->quality->value,
+                'reference_images' => $source->reference_images,
+            ],
             'sizes' => array_map(fn (ImageSize $size) => [
                 'value' => $size->value,
                 'label' => $size->label(),
@@ -47,6 +60,8 @@ final class GenerateController
             $create($user, $request->prompt(), $request->size(), $request->quality(), $request->referenceImages());
         } catch (InsufficientCredits $insufficient) {
             return back()->withErrors(['credits' => $insufficient->getMessage()]);
+        } catch (TooManyPendingGenerations $busy) {
+            return back()->withErrors(['generation' => $busy->getMessage()]);
         }
 
         return to_route('history')->with('success', __('Sent to Pixelforge. You will be charged the exact cost when it finishes, and nothing if it fails.'));

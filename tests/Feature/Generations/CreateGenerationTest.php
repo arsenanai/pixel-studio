@@ -99,3 +99,30 @@ it('shows the generate form with every size and quality Pixelforge offers', func
             ->where('auth.user.isAdmin', false)
             ->missing('auth.user.password'));
 });
+
+it('limits how many unfinished images one user can have, so the shared Pixelforge quota stays fair', function () {
+    fakePricing();
+    Queue::fake();
+    $user = User::factory()->withCredits(20)->create();
+    Generation::factory()->for($user)->count(5)->processing()->create();
+
+    $this->actingAs($user)->from('/generate')->post('/generations', [
+        'prompt' => 'One too many', 'size' => '1024x1024', 'quality' => 'low', 'reference_images' => [],
+    ])->assertRedirect('/generate')->assertSessionHasErrors('generation');
+
+    expect(Generation::query()->where('user_id', $user->id)->count())->toBe(5);
+});
+
+it('prefills the form from one of your own earlier images, and only your own', function () {
+    $user = User::factory()->create();
+    $mine = Generation::factory()->for($user)->failed()->create([
+        'prompt' => 'A fox at dawn', 'size' => '1536x1024', 'quality' => 'high', 'reference_images' => ['https://example.com/a.png'],
+    ]);
+    $theirs = Generation::factory()->create(['prompt' => 'Someone else']);
+
+    $this->actingAs($user)->get("/generate?from={$mine->id}")->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('prefill', ['prompt' => 'A fox at dawn', 'size' => '1536x1024', 'quality' => 'high', 'reference_images' => ['https://example.com/a.png']]));
+
+    $this->actingAs($user)->get("/generate?from={$theirs->id}")->assertInertia(fn (AssertableInertia $page) => $page->where('prefill', null));
+    $this->actingAs($user)->get('/generate?from=not-a-uuid')->assertInertia(fn (AssertableInertia $page) => $page->where('prefill', null));
+});

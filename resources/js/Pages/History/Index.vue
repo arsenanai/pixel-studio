@@ -21,7 +21,7 @@ const props = defineProps<{
 
 const { start, stop } = usePoll(
     2500,
-    { only: ['generations', 'hasPending', 'counts'] },
+    { only: ['generations', 'hasPending', 'counts', 'credits'] },
     { autoStart: false },
 );
 
@@ -328,6 +328,20 @@ function details(generation: Generation): string {
                                         >
                                             {{ generation.error }}
                                         </p>
+                                        <Link
+                                            :href="
+                                                route('generate', {
+                                                    from: generation.id,
+                                                })
+                                            "
+                                            class="mt-1 inline-flex min-h-8 items-center text-xs font-medium text-indigo-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            {{
+                                                generation.status === 'failed'
+                                                    ? t('Try again')
+                                                    : t('Use again')
+                                            }}
+                                        </Link>
                                     </td>
                                     <td class="px-4 py-3">
                                         <StatusBadge
@@ -390,6 +404,18 @@ function details(generation: Generation): string {
                             >
                                 {{ generation.error }}
                             </p>
+                            <Link
+                                :href="
+                                    route('generate', { from: generation.id })
+                                "
+                                class="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                {{
+                                    generation.status === 'failed'
+                                        ? t('Try again')
+                                        : t('Use again')
+                                }}
+                            </Link>
                             <dl
                                 class="mt-3 grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 text-xs"
                             >

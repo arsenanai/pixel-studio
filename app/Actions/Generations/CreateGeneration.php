@@ -7,19 +7,25 @@ namespace App\Actions\Generations;
 use App\Enums\ImageQuality;
 use App\Enums\ImageSize;
 use App\Exceptions\InsufficientCredits;
+use App\Exceptions\TooManyPendingGenerations;
 use App\Jobs\SubmitGenerationJob;
 use App\Models\Generation;
 use App\Models\User;
+use Illuminate\Container\Attributes\Config;
 use Illuminate\Support\Facades\DB;
 
 final readonly class CreateGeneration
 {
-    public function __construct(private QuoteGeneration $quote) {}
+    public function __construct(
+        private QuoteGeneration $quote,
+        #[Config('billing.max_pending_per_user')] private int $maxPending,
+    ) {}
 
     /**
      * @param  list<string>  $referenceImages
      *
      * @throws InsufficientCredits
+     * @throws TooManyPendingGenerations
      */
     public function __invoke(User $user, string $prompt, ImageSize $size, ImageQuality $quality, array $referenceImages): Generation
     {
@@ -27,6 +33,10 @@ final readonly class CreateGeneration
 
         return DB::transaction(function () use ($user, $prompt, $size, $quality, $referenceImages, $quote): Generation {
             $locked = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->generations()->pending()->count() >= $this->maxPending) {
+                throw new TooManyPendingGenerations($this->maxPending);
+            }
 
             $available = $locked->availableCredits();
 

@@ -15,15 +15,21 @@ const props = defineProps<{
     sizes: Option[];
     qualities: Option[];
     limits: { promptMaxCharacters: number; referenceImagesMax: number };
+    prefill: {
+        prompt: string;
+        size: string;
+        quality: string;
+        reference_images: string[];
+    } | null;
 }>();
 
 const DEFAULTS = { size: '1024x1024', quality: 'medium' };
 
 const form = useForm({
-    prompt: '',
-    size: DEFAULTS.size,
-    quality: DEFAULTS.quality,
-    reference_images: [] as string[],
+    prompt: props.prefill?.prompt ?? '',
+    size: props.prefill?.size ?? DEFAULTS.size,
+    quality: props.prefill?.quality ?? DEFAULTS.quality,
+    reference_images: [...(props.prefill?.reference_images ?? [])],
 });
 
 type Draft = {
@@ -35,6 +41,7 @@ type Draft = {
 
 const draft = useDraft<Draft>({
     key: String(usePage().props.auth.user.id),
+    skipRestore: props.prefill !== null,
     source: () => ({
         prompt: form.prompt,
         size: form.size,
@@ -128,7 +135,12 @@ function fieldError(key: string): string | undefined {
 }
 
 function submit(): void {
-    form.post(route('generations.store'), {
+    form.transform((data) => ({
+        ...data,
+        reference_images: data.reference_images
+            .map((url) => url.trim())
+            .filter((url) => url !== ''),
+    })).post(route('generations.store'), {
         preserveScroll: true,
         onSuccess: () => {
             draft.discard();
@@ -161,6 +173,18 @@ function submit(): void {
                     }}
                 </p>
             </header>
+
+            <div
+                v-if="prefill"
+                class="mt-6 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-950"
+                role="status"
+            >
+                {{
+                    t(
+                        'Copied from an earlier image. Nothing is sent until you press Generate.',
+                    )
+                }}
+            </div>
 
             <div
                 v-if="draft.restored.value"
@@ -355,6 +379,13 @@ function submit(): void {
                     </fieldset>
 
                     <div class="border-t border-gray-200 pt-6">
+                        <p
+                            v-if="fieldError('generation')"
+                            role="alert"
+                            class="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                        >
+                            {{ fieldError('generation') }}
+                        </p>
                         <div
                             v-if="
                                 (quote && state === 'ready' && !canAfford) ||
