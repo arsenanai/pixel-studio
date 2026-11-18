@@ -33,8 +33,12 @@ final class StoreGenerationImage implements ShouldBeUnique, ShouldQueueAfterComm
         return $this->generationId;
     }
 
-    public function handle(#[Config('filesystems.images_disk')] string $disk): void
+    public function handle(#[Config('filesystems.images_disk')] ?string $disk): void
     {
+        if ($disk === null) {
+            return;
+        }
+
         $generation = Generation::query()->find($this->generationId);
 
         if ($generation === null

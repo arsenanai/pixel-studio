@@ -28,9 +28,21 @@ return [
     |
     */
 
-    'images_disk' => env('IMAGES_DISK', 'local'),
+    'images_disk' => env('IMAGES_DISK'),
 
     'disks' => [
+
+        'images' => [
+            'driver' => 's3',
+            'key' => env('IMAGES_ACCESS_KEY_ID'),
+            'secret' => env('IMAGES_SECRET_ACCESS_KEY'),
+            'region' => env('IMAGES_REGION', 'auto'),
+            'bucket' => env('IMAGES_BUCKET'),
+            'endpoint' => env('IMAGES_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => true,
+            'report' => true,
+        ],
 
         'local' => [
             'driver' => 'local',

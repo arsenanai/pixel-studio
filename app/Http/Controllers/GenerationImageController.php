@@ -13,8 +13,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class GenerationImageController
 {
-    public function __invoke(Generation $generation, #[CurrentUser] User $user, #[Config('filesystems.images_disk')] string $disk): StreamedResponse
+    public function __invoke(Generation $generation, #[CurrentUser] User $user, #[Config('filesystems.images_disk')] ?string $disk): StreamedResponse
     {
+        abort_if($disk === null, 404);
+
         abort_unless($generation->user_id === $user->id || $user->is_admin, 404);
         abort_if($generation->image_path === null || ! Storage::disk($disk)->exists($generation->image_path), 404);
 

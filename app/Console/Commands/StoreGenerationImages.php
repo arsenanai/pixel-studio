@@ -18,6 +18,12 @@ final class StoreGenerationImages extends Command
 
     public function handle(): int
     {
+        if (config('filesystems.images_disk') === null) {
+            $this->warn('IMAGES_DISK is not set, so images are not copied.');
+
+            return self::SUCCESS;
+        }
+
         $queued = 0;
 
         Generation::query()

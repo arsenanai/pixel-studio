@@ -79,3 +79,12 @@ it('backfills images that finished before copying existed', function () {
     Queue::assertPushed(StoreGenerationImage::class, fn (StoreGenerationImage $job) => $job->generationId === $fresh->id);
     Queue::assertPushed(StoreGenerationImage::class, 1);
 });
+
+it('leaves images on Pixelforge when no durable disk is configured', function () {
+    config(['filesystems.images_disk' => null]);
+
+    $generation = succeedWithFreshImage(Generation::factory()->processing()->create());
+
+    expect($generation->refresh()->image_path)->toBeNull();
+    $this->artisan('pixelforge:store-images')->expectsOutputToContain('IMAGES_DISK is not set')->assertSuccessful();
+});
