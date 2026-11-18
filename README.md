@@ -29,7 +29,7 @@ One rule handles duplicates and out-of-order delivery: **a snapshot is applied o
 - **Duplicate deliveries.** `webhook_events.provider_event_id` is unique and inserted with `insertOrIgnore` in the same transaction as the transition. A redelivery inserts nothing and returns 204. If applying fails, the event row rolls back too, and Pixelforge's retry starts clean.
 - **Webhook before the create response.** The generation row is committed before the submit job runs (`ShouldQueueAfterCommit`). Our UUID is sent as both the `Idempotency-Key` and `metadata.generation_id`, so an early webhook finds the row. When the late `202 queued` lands, it fills in the provider id and can't move the status back. This is tested by delivering the webhook from inside the faked HTTP call.
 - **Limits, overloads and timeouts.** The submit job honours `Retry-After` on 429/503, backs off exponentially up to a minute, and retries timeouts with the same key and the same body for up to 15 minutes. A request Pixelforge rejects outright (content policy, validation, daily quota) becomes a failed, free generation with a plain reason.
-- **Missed webhooks.** `pixelforge:poll` runs every 30 seconds. It fetches accepted generations that have been quiet for 30 seconds, outside any transaction, and passes them to the same `ApplyGenerationUpdate`. It stops for the tick on 429/503, re-submits generations that never got a provider id, and cancels them for free after 30 minutes.
+- **Missed webhooks.** `pixelforge:poll` runs every 30 seconds. It fetches accepted generations that have been quiet for 30 seconds, outside any transaction, and passes them to the same `ApplyGenerationUpdate`. It stops for the tick on 429/503, re-submits generations that never got a provider id, and cancels them for free after 30 minutes. One generation that fails to apply is logged and skipped, so it can't stall the rest. A generation Pixelforge still can't find 30 minutes after submission is cancelled for free: it has no record under our key, so it can't be billed.
 
 The webhook is handled synchronously: one insert plus one locked update is far inside Pixelforge's 10-second budget, and queueing it would need a second layer of dedupe for no gain.
 
@@ -47,7 +47,7 @@ php artisan pixelforge:reconcile --from=2026-11-01 --to=2026-11-16   # exits 1 o
 php artisan pixelforge:usage                                          # what Pixelforge billed this key
 ```
 
-Reconciliation runs every night for the previous day. Usage is per API key, so each environment has its own key and reconciles only its own numbers.
+Pixelforge's daily `generations` count includes only billed (succeeded) generations; a `[fail]` on 17 Nov in production is not counted, and that day reconciles exactly. Reconciliation runs every night for the previous day. Usage is per API key, so each environment has its own key and reconciles only its own numbers.
 
 ### Built for volume
 
@@ -69,13 +69,15 @@ Credits are US dollars, held in an append-only `credit_transactions` ledger: pur
 
 - **Buying** is simulated: the Credits page adds $1, $5 or $20 with no payment.
 - **The statement** is paginated and filterable by purchases or charges. Each line shows the balance after it (a window over the user's own ledger) and, for charges, the prompt it paid for.
-- **Holding.** Available credit is the balance minus the *estimated maximum* of the user's unfinished generations. Submitting locks the user's row and refuses any generation whose maximum exceeds what is available, so two quick submits can't spend the same money, and whatever an image really costs is already covered.
+- **Holding.** Available credit is the balance minus the *estimated maximum* of the user's unfinished generations, read in one SQL statement so a charge and its released hold are always seen together. Submitting locks the user's row and refuses any generation whose maximum exceeds what is available, so two quick submits can't spend the same money, and whatever an image really costs is already covered.
+- **Fair use.** Pixelforge's concurrency and daily limits are per account, so each user can have at most five unfinished images.
+- **Closing an account** anonymises and soft-deletes the user. Their generations, ledger and daily spend stay, because Pixelforge billed them and reconciliation needs them; the database refuses a hard delete.
 - **Charging.** When a generation succeeds, the exact charge is debited in the same transaction as the status change. `(generation_id, type)` is unique, so even if the rank rule were bypassed the database refuses a second debit. A failed or rejected generation debits nothing, and its hold ends with its status.
 
 ## History, images and drafts
 
-- **History** has status tabs with counts, prompt search and numbered pages. Polling keeps running while anything is unfinished, even when the current filter hides it.
-- **Images are copied into our own storage** once a generation succeeds (`StoreGenerationImage`, after the charge commits). Pixelforge's links expire after 24 hours, so this keeps history working and puts loading speed under our control. Only PNGs under 20 MB are stored. Images are served only to their owner (and operators) with long private caching. `pixelforge:store-images` backfills older images whose links are still valid. Copying is on when `IMAGES_DISK` names a durable disk (`local` in development, the `images` R2 bucket in production); without one the app keeps using Pixelforge's links, because Laravel Cloud's own disk is wiped on every deploy.
+- **History** has status tabs with counts, prompt search and numbered pages. Every row links back to the form prefilled with its settings ("Try again" for failures). Polling keeps running while anything is unfinished, even when the current filter hides it.
+- **Images are copied into our own storage** once a generation succeeds (`StoreGenerationImage`, after the charge commits). Pixelforge's links expire after 24 hours, so this keeps history working and puts loading speed under our control. It downloads only over https from Pixelforge's host, without following redirects, and stops reading past 20 MB. Images are served only to their owner (and operators) with long private caching. `pixelforge:store-images` backfills older images whose links are still valid. Copying is on when `IMAGES_DISK` names a durable disk (`local` in development, the `images` R2 bucket in production); without one the app keeps using Pixelforge's links, because Laravel Cloud's own disk is wiped on every deploy.
 - **Drafts.** The generate form saves a draft per user in the browser, restores it with a "start over" option, and clears every draft on log out, so a shared computer doesn't keep someone's prompts.
 - **Sizes and quality** are shown as their real aspect ratio and a level meter, not just labels.
 
@@ -116,6 +118,7 @@ To try the report at volume, point `DB_DATABASE` at a scratch database and run `
 - **Polling the history page instead of websockets.** The page reloads its own props every 2.5 seconds, and only while something on it is unfinished. That is plenty for this, and there is no extra infrastructure to run.
 - **A rollup table for the report, written by the billing transaction.** The alternative, a scheduled aggregation, would lag and need its own catch-up logic. Writing it next to the charge makes it exact by construction, and the rebuild action covers backfills.
 - **A hand-built SVG chart, no chart library.** One stacked column chart doesn't justify a dependency, and owning the markup made keyboard reading, the hover target and the colour-blind-checked palette straightforward.
+- **Users see Pixelforge's cost and our markup as separate lines, to nine decimals.** The brief is about trusting what you're charged, so the quote shows exactly how the price is built and history shows the exact charge. Headline totals are rounded to cents with the exact figure beside them.
 - **Drafts in the browser, not the database.** A draft is a convenience for one device. Server drafts would sync across devices but add a table and an endpoint for little gain.
 - **Tests run on in-memory SQLite.** `lockForUpdate()` is a no-op there, so the concurrency guarantee comes from the lock plus the rank rule, and is exercised by sequential race tests. Migrations stay portable (`json`, string-backed enums).
 - **Hand-written DTO hydration.** Every Pixelforge field passes through one typed reader that names the bad path when a shape is wrong. `mixed` stays in that one class.
@@ -123,7 +126,6 @@ To try the report at volume, point `DB_DATABASE` at a scratch database and run `
 ## Known limits
 
 - If a create request times out, Pixelforge actually creates the generation, and every later retry for 30 minutes is rejected before it can replay, the row is cancelled as free while Pixelforge bills it. Reconciliation would show that day as different. In practice any replay inside the 30 minutes recovers it.
-- A generation Pixelforge reports as `404` (for example after a key change) is logged and left pending rather than guessed at.
 - I wrote the Kazakh translation myself; a native speaker should review it before real users see it.
 
 ## What I'd do next
