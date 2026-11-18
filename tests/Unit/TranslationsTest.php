@@ -6,6 +6,7 @@ const STORED_MESSAGES = [
     'The daily Pixelforge generation limit has been reached. It resets at midnight UTC.',
     'Pixelforge could not accept this generation.',
     'Pixelforge did not say why.',
+    'Pixelforge has no record of this generation, so it was cancelled.',
     'The model could not produce an image for this prompt.',
     'The model could not produce an image for this prompt. You were not charged.',
     'Something went wrong on our side while generating. You were not charged; please retry.',

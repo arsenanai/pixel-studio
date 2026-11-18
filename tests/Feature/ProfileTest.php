@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\CreditTransaction;
+use App\Models\Generation;
 use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -64,7 +68,35 @@ test('user can delete their account', function () {
         ->assertRedirect('/');
 
     $this->assertGuest();
-    $this->assertNull($user->fresh());
+    $this->assertNull(User::query()->find($user->id));
+    $this->assertSoftDeleted($user);
+});
+
+test('closing an account keeps its billing records but removes the personal details', function () {
+    $user = User::factory()->withCredits(5)->create(['name' => 'Ada', 'email' => 'ada@example.com']);
+    $generation = Generation::factory()->for($user)->succeeded()->create();
+
+    $this->actingAs($user)->delete('/profile', ['password' => 'password'])->assertRedirect('/');
+
+    $closed = User::withTrashed()->findOrFail($user->id);
+    expect($closed->name)->toBe('Closed account')
+        ->and($closed->email)->toBe("closed-{$user->id}@accounts.invalid")
+        ->and($generation->fresh())->not->toBeNull()
+        ->and(CreditTransaction::query()->where('user_id', $user->id)->count())->toBe(1)
+        ->and(DB::table('daily_spend')->where('user_id', $user->id)->exists())->toBeTrue();
+
+    $this->post('/login', ['email' => 'ada@example.com', 'password' => 'password']);
+    $this->assertGuest();
+
+    $this->post('/register', ['name' => 'Ada again', 'email' => 'ada@example.com', 'password' => 'password', 'password_confirmation' => 'password'])
+        ->assertSessionHasNoErrors();
+});
+
+test('the database refuses to hard-delete a user who has billing records', function () {
+    $user = User::factory()->create();
+    Generation::factory()->for($user)->create();
+
+    expect(fn () => $user->forceDelete())->toThrow(QueryException::class);
 });
 
 test('correct password must be provided to delete account', function () {
