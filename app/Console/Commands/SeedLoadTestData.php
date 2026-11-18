@@ -11,6 +11,7 @@ use App\Enums\ImageQuality;
 use App\Enums\ImageSize;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
+use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,6 +20,8 @@ use Random\Randomizer;
 
 final class SeedLoadTestData extends Command
 {
+    use ConfirmableTrait;
+
     private const CHUNK = 1000;
 
     private const COST_RANGE_NANO = [
@@ -42,17 +45,16 @@ final class SeedLoadTestData extends Command
         {--users=5000 : Users to create}
         {--generations=500000 : Generations to spread across those users}
         {--days=90 : How many past days the generations cover}
-        {--seed=42 : Random seed, so runs are repeatable}';
+        {--seed=42 : Random seed, so runs are repeatable}
+        {--force : Run in production, where the synthetic accounts are left out of reconciliation}';
 
-    protected $description = 'Fill a non-production database with synthetic users, generations and ledger rows for load testing';
+    protected $description = 'Fill the database with synthetic users, generations and ledger rows for load testing';
 
     private Randomizer $random;
 
     public function handle(RebuildDailySpend $rebuild): int
     {
-        if (app()->isProduction()) {
-            $this->error('Refusing to seed synthetic data in production: it would break reconciliation with Pixelforge.');
-
+        if (! $this->confirmToProceed()) {
             return self::FAILURE;
         }
 
@@ -84,6 +86,7 @@ final class SeedLoadTestData extends Command
                 'email' => "load-{$batch}-{$n}@example.test",
                 'password' => $password,
                 'is_admin' => false,
+                'is_synthetic' => true,
                 'email_verified_at' => $createdAt,
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
@@ -151,7 +154,7 @@ final class SeedLoadTestData extends Command
         $quality = $this->pick(ImageQuality::cases())->value;
         [$low, $high] = self::COST_RANGE_NANO[$quality];
         $cost = $this->random->getInt($low, $high);
-        $recent = $createdAt->greaterThan($now->subMinutes(2));
+        $recent = ! $this->laravel->isProduction() && $createdAt->greaterThan($now->subMinutes(2));
         $status = match (true) {
             $recent => GenerationStatus::Processing,
             $this->random->getInt(1, 100) <= 5 => GenerationStatus::Failed,

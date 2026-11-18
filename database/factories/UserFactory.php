@@ -43,6 +43,13 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function synthetic(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_synthetic' => true,
+        ]);
+    }
+
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [

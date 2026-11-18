@@ -51,7 +51,7 @@ Pixelforge's daily `generations` count includes only billed (succeeded) generati
 
 ### Built for volume
 
-I loaded 500,000 generations across 5,000 users and 90 days (`php artisan load-test:seed`, refused in production) and measured before changing anything:
+I loaded 500,000 generations across 5,000 users and 90 days (`php artisan load-test:seed`) and measured before changing anything:
 
 | | Before | After |
 |---|---|---|
@@ -62,6 +62,8 @@ I loaded 500,000 generations across 5,000 users and 90 days (`php artisan load-t
 | Credit statement, 28k ledger rows | first 50 only | 90–105 ms on any page |
 
 The report now reads `daily_spend`, one row per user per day. `ApplyGenerationUpdate` adds to it in the same transaction that records the charge, so it can't disagree with the generations. `RebuildDailySpend` recomputes any range from raw rows; the migration uses it to backfill. The report's cost now grows with days × active users, not with every generation ever made.
+
+The live site carries the same 500,000 synthetic generations, so `/admin` can be judged at volume. Those accounts are flagged `is_synthetic` and named "Load User…"; they count in every report figure but are left out of the Pixelforge check, because Pixelforge never made their images. The report says how many it left out, and real accounts still reconcile exactly. Seeding production needs `--force`.
 
 ## Credit balances
 
@@ -109,7 +111,7 @@ npm run type-check   # vue-tsc, strict, no `any`
 
 Prompt keywords make Pixelforge misbehave on purpose: `[fail]`, `[blocked]`, `[overloaded]`, `[slow]`, `[duplicate]`, `[succeed]`.
 
-To try the report at volume, point `DB_DATABASE` at a scratch database and run `php artisan migrate && php artisan load-test:seed` (5,000 users and 500,000 generations by default; never in production, since synthetic rows would break reconciliation).
+To try the report at volume, point `DB_DATABASE` at a scratch database and run `php artisan migrate && php artisan load-test:seed` (5,000 users and 500,000 generations by default).
 
 ## Decisions and trade-offs
 

@@ -53,7 +53,7 @@ final class SpendReportController
             'users' => $user === null
                 ? $report->byUser($from, $to, $request->search(), $request->sort(), self::USERS_PER_PAGE)
                 : null,
-            'reconciliation' => $user === null ? Inertia::defer(fn () => $this->reconciliation($reconcile, $from, $to)) : null,
+            'reconciliation' => $user === null ? Inertia::defer(fn () => $this->reconciliation($reconcile, $report, $from, $to)) : null,
         ]);
     }
 
@@ -97,12 +97,12 @@ final class SpendReportController
     }
 
     /** @return array<string, mixed> */
-    private function reconciliation(ReconcileUsage $reconcile, CarbonImmutable $from, CarbonImmutable $to): array
+    private function reconciliation(ReconcileUsage $reconcile, SpendReport $report, CarbonImmutable $from, CarbonImmutable $to): array
     {
         try {
             $days = $reconcile($from, $to);
         } catch (PixelforgeRequestFailed|PixelforgeUnreachable|InvalidPixelforgePayload) {
-            return ['available' => false, 'days' => [], 'mismatches' => 0];
+            return ['available' => false, 'days' => [], 'mismatches' => 0, 'syntheticAccounts' => 0];
         }
 
         $mismatches = array_values(array_filter($days, fn (ReconciledDay $day) => ! $day->matches()));
@@ -112,6 +112,7 @@ final class SpendReportController
             'checkedDays' => count($days),
             'mismatches' => count($mismatches),
             'days' => $mismatches,
+            'syntheticAccounts' => $report->syntheticAccounts(),
         ];
     }
 }

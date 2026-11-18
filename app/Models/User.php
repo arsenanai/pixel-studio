@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property bool $is_admin
+ * @property bool $is_synthetic
  * @property string|null $locale
  * @property Carbon|null $deleted_at
  */
@@ -40,6 +41,7 @@ class User extends Authenticatable
 
     protected $attributes = [
         'is_admin' => false,
+        'is_synthetic' => false,
         'locale' => null,
     ];
 
@@ -54,6 +56,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'is_synthetic' => 'boolean',
         ];
     }
 

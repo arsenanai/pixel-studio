@@ -25,9 +25,9 @@ final readonly class SpendReport
     }
 
     /** @return array<string, SpendTotals> */
-    public function byDay(CarbonImmutable $from, CarbonImmutable $to, ?int $userId = null): array
+    public function byDay(CarbonImmutable $from, CarbonImmutable $to, ?int $userId = null, bool $realAccountsOnly = false): array
     {
-        $rows = $this->totals($this->range($from, $to, $userId))
+        $rows = $this->totals($this->range($from, $to, $userId, $realAccountsOnly))
             ->addSelect('daily_spend.day')
             ->groupBy('daily_spend.day')
             ->get()
@@ -86,11 +86,20 @@ final readonly class SpendReport
             ]);
     }
 
-    private function range(CarbonImmutable $from, CarbonImmutable $to, ?int $userId = null): Builder
+    public function syntheticAccounts(): int
+    {
+        return DB::table('users')->where('is_synthetic', true)->count();
+    }
+
+    private function range(CarbonImmutable $from, CarbonImmutable $to, ?int $userId = null, bool $realAccountsOnly = false): Builder
     {
         return DB::table('daily_spend')
             ->whereBetween('daily_spend.day', [$from->toDateString(), $to->toDateString()])
-            ->when($userId !== null, fn (Builder $query) => $query->where('daily_spend.user_id', $userId));
+            ->when($userId !== null, fn (Builder $query) => $query->where('daily_spend.user_id', $userId))
+            ->when($realAccountsOnly, fn (Builder $query) => $query->whereNotIn(
+                'daily_spend.user_id',
+                DB::table('users')->select('id')->where('is_synthetic', true),
+            ));
     }
 
     private function totals(Builder $query): Builder

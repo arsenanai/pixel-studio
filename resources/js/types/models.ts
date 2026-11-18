@@ -124,10 +124,11 @@ export interface ReconciledDay {
 }
 
 export type Reconciliation =
-    | { available: false; days: []; mismatches: 0 }
+    | { available: false; days: []; mismatches: 0; syntheticAccounts: 0 }
     | {
           available: true;
           checkedDays: number;
           mismatches: number;
           days: ReconciledDay[];
+          syntheticAccounts: number;
       };

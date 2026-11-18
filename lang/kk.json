@@ -7,6 +7,7 @@
     ":count image is still in progress.|:count images are still in progress.": ":count сурет әлі дайындалуда.",
     ":count image|:count images": ":count сурет",
     ":count reference|:count references": ":count үлгі",
+    ":count synthetic load-test account is left out of this check, because Pixelforge never made its images.|:count synthetic load-test accounts are left out of this check, because Pixelforge never made their images.": ":count синтетикалық жүктеме-тест аккаунты бұл тексеруге кірмейді, себебі олардың суреттерін Pixelforge жасамаған.",
     ":date: charged :charged, Pixelforge cost :cost, profit :profit, :images.": ":date: алынды :charged, Pixelforge құны :cost, пайда :profit, :images.",
     ":days days": ":days күн",
     ":from–:to of :total": ":total ішінен :from–:to",

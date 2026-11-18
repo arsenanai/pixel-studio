@@ -135,6 +135,27 @@ describe('reconciliation', function () {
                     ->where('reconciliation.mismatches', 0)));
     });
 
+    it('leaves synthetic load-test accounts out of the check but not out of the report', function () {
+        Generation::factory()->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-17 09:00:00'))->create();
+        Generation::factory()
+            ->for(User::factory()->synthetic())
+            ->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-17 10:00:00'))
+            ->create();
+        Http::fake(['pixelforge.test/v1/usage*' => Http::response(usageReport('2026-10-19', '2026-11-17', [
+            '2026-11-17' => [1, 305_510_000],
+        ]))]);
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get('/admin')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('total.succeeded', 2)
+                ->loadDeferredProps(fn (AssertableInertia $reload) => $reload
+                    ->where('reconciliation.mismatches', 0)
+                    ->where('reconciliation.syntheticAccounts', 1)));
+
+        $this->artisan('pixelforge:reconcile', ['--to' => '2026-11-17'])->assertSuccessful();
+    });
+
     it('shows a day that is off by a single nanodollar', function () {
         Generation::factory()->succeeded(docsUsage(), CarbonImmutable::parse('2026-11-17 09:00:00'))->create();
         Http::fake(['pixelforge.test/v1/usage*' => Http::response(usageReport('2026-10-19', '2026-11-17', [

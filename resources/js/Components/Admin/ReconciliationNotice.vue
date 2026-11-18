@@ -169,6 +169,20 @@ defineProps<{
                 </template>
             </Deferred>
         </div>
+        <p
+            v-if="
+                reconciliation?.available &&
+                reconciliation.syntheticAccounts > 0
+            "
+            class="mt-2 text-xs text-gray-500"
+        >
+            {{
+                tc(
+                    ':count synthetic load-test account is left out of this check, because Pixelforge never made its images.|:count synthetic load-test accounts are left out of this check, because Pixelforge never made their images.',
+                    reconciliation.syntheticAccounts,
+                )
+            }}
+        </p>
         <p class="mt-2 text-xs text-gray-500">
             {{
                 t(

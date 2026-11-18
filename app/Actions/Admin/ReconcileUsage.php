@@ -21,7 +21,7 @@ final readonly class ReconcileUsage
     public function __invoke(CarbonImmutable $from, CarbonImmutable $to): array
     {
         $usage = $this->client->usage($from, $to);
-        $ours = $this->report->byDay($from, $to);
+        $ours = $this->report->byDay($from, $to, realAccountsOnly: true);
 
         $days = [];
 
