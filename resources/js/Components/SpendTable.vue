@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { t, tc } from '@/lib/i18n';
 import type { SpendTotals } from '@/types/models';
+import { Link } from '@inertiajs/vue3';
 
 export interface SpendRow {
     key: string;
     label: string;
     detail?: string;
+    href?: string;
     totals: SpendTotals;
 }
 
@@ -13,6 +16,7 @@ defineProps<{
     heading: string;
     rows: SpendRow[];
     total?: SpendTotals;
+    empty?: string;
 }>();
 </script>
 
@@ -31,18 +35,24 @@ defineProps<{
                     <th scope="col" class="px-4 py-3 text-left">
                         {{ heading }}
                     </th>
-                    <th scope="col" class="px-4 py-3 text-right">Images</th>
-                    <th scope="col" class="px-4 py-3 text-right">Charged</th>
                     <th scope="col" class="px-4 py-3 text-right">
-                        Pixelforge cost
+                        {{ t('Images') }}
                     </th>
-                    <th scope="col" class="px-4 py-3 text-right">Profit</th>
+                    <th scope="col" class="px-4 py-3 text-right">
+                        {{ t('Charged') }}
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-right">
+                        {{ t('Pixelforge cost') }}
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-right">
+                        {{ t('Profit') }}
+                    </th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 <tr v-if="rows.length === 0">
                     <td colspan="5" class="px-4 py-8 text-center text-gray-500">
-                        Nothing finished in this range.
+                        {{ empty ?? t('Nothing finished in this range.') }}
                     </td>
                 </tr>
                 <tr v-for="row in rows" :key="row.key">
@@ -50,7 +60,14 @@ defineProps<{
                         scope="row"
                         class="px-4 py-2.5 text-left font-normal text-gray-900"
                     >
-                        {{ row.label }}
+                        <Link
+                            v-if="row.href"
+                            :href="row.href"
+                            preserve-scroll
+                            class="font-medium text-indigo-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >{{ row.label }}</Link
+                        >
+                        <template v-else>{{ row.label }}</template>
                         <span
                             v-if="row.detail"
                             class="block text-xs text-gray-500"
@@ -65,7 +82,7 @@ defineProps<{
                             v-if="row.totals.failed"
                             class="block text-xs text-gray-500"
                         >
-                            +{{ row.totals.failed }} failed, free
+                            {{ tc('+:count failed, free', row.totals.failed) }}
                         </span>
                     </td>
                     <td
@@ -90,7 +107,9 @@ defineProps<{
                 class="border-t border-gray-200 bg-gray-50 font-medium text-gray-900"
             >
                 <tr>
-                    <th scope="row" class="px-4 py-2.5 text-left">Total</th>
+                    <th scope="row" class="px-4 py-2.5 text-left">
+                        {{ t('Total') }}
+                    </th>
                     <td class="px-4 py-2.5 text-right tabular-nums">
                         {{ total.succeeded }}
                     </td>

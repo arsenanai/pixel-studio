@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Enums\SpendSort;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 final class SpendReportRequest extends FormRequest
@@ -14,12 +17,15 @@ final class SpendReportRequest extends FormRequest
 
     public const DEFAULT_DAYS = 30;
 
-    /** @return array<string, list<string>> */
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
+            'user' => ['nullable', 'integer', Rule::exists('users', 'id')],
+            'q' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', Rule::enum(SpendSort::class)],
         ];
     }
 
@@ -47,6 +53,21 @@ final class SpendReportRequest extends FormRequest
     public function from(): CarbonImmutable
     {
         return $this->day('from') ?? $this->to()->subDays(self::DEFAULT_DAYS - 1);
+    }
+
+    public function filteredUser(): ?User
+    {
+        return $this->filled('user') ? User::query()->find($this->integer('user')) : null;
+    }
+
+    public function search(): string
+    {
+        return trim($this->string('q')->toString());
+    }
+
+    public function sort(): SpendSort
+    {
+        return $this->enum('sort', SpendSort::class) ?? SpendSort::Charged;
     }
 
     private function day(string $key): ?CarbonImmutable

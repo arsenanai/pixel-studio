@@ -22,8 +22,8 @@ it('quotes the docs example as a range with a breakdown', function () {
     ]);
 
     $response->assertOk()
-        ->assertJsonPath('charge.min', ['nano' => '357781250', 'display' => '$0.35778125'])
-        ->assertJsonPath('charge.max', ['nano' => '467343750', 'display' => '$0.46734375'])
+        ->assertJsonPath('charge.min', ['nano' => '357781250', 'display' => '$0.35778125', 'cents' => '$0.36'])
+        ->assertJsonPath('charge.max', ['nano' => '467343750', 'display' => '$0.46734375', 'cents' => '$0.47'])
         ->assertJsonPath('providerCost.max.nano', '373875000')
         ->assertJsonPath('markup.max.nano', '93468750')
         ->assertJsonPath('lines.3.type', 'reasoning_tokens')

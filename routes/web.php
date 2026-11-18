@@ -4,11 +4,13 @@ use App\Http\Controllers\Admin\SpendReportController;
 use App\Http\Controllers\CreditsController;
 use App\Http\Controllers\GenerateController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuoteController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/generate');
+Route::post('/locale', LocaleController::class)->middleware('throttle:quotes')->name('locale');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/generate', [GenerateController::class, 'create'])->name('generate');
@@ -26,7 +28,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'can:view-spend-report'])->group(function () {
-    Route::get('/admin', SpendReportController::class)->name('admin.report');
+    Route::get('/admin', [SpendReportController::class, 'index'])->name('admin.report');
+    Route::get('/admin/export', [SpendReportController::class, 'export'])->name('admin.export');
 });
 
 Route::middleware('auth')->group(function () {

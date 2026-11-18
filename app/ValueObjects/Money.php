@@ -95,10 +95,18 @@ final readonly class Money implements JsonSerializable
         return $sign.'$'.number_format($dollars).'.'.$fraction;
     }
 
-    /** @return array{nano: string, display: string} */
+    public function formatCents(): string
+    {
+        $cents = intdiv(abs($this->nano) + 5_000_000, 10_000_000);
+        $sign = $this->nano < 0 && $cents > 0 ? '-' : '';
+
+        return $sign.'$'.number_format(intdiv($cents, 100)).'.'.str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
+    }
+
+    /** @return array{nano: string, display: string, cents: string} */
     public function jsonSerialize(): array
     {
-        return ['nano' => (string) $this->nano, 'display' => $this->format()];
+        return ['nano' => (string) $this->nano, 'display' => $this->format(), 'cents' => $this->formatCents()];
     }
 
     /** @return array{string, int, string} */

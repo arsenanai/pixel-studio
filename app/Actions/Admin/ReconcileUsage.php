@@ -14,14 +14,14 @@ final readonly class ReconcileUsage
 {
     public function __construct(
         private PixelforgeClient $client,
-        private BuildSpendReport $report,
+        private SpendReport $report,
     ) {}
 
     /** @return list<ReconciledDay> */
     public function __invoke(CarbonImmutable $from, CarbonImmutable $to): array
     {
         $usage = $this->client->usage($from, $to);
-        $ours = ($this->report)($from, $to)['days'];
+        $ours = $this->report->byDay($from, $to);
 
         $days = [];
 

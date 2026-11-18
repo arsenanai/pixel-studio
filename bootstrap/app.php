@@ -4,6 +4,7 @@ use App\Exceptions\InvalidPixelforgePayload;
 use App\Exceptions\PixelforgeRequestFailed;
 use App\Exceptions\PixelforgeUnreachable;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,13 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            SetLocale::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (PixelforgeUnreachable|PixelforgeRequestFailed|InvalidPixelforgePayload $exception, Request $request) {
-            $message = 'Pixelforge pricing is unavailable right now. Try again in a moment; nothing was charged.';
+            $message = __('Pixelforge pricing is unavailable right now. Try again in a moment; nothing was charged.');
 
             if ($request->hasHeader('X-Inertia')) {
                 return back()->with('error', $message);

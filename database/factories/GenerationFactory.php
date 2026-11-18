@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Actions\Admin\RecordDailySpend;
 use App\Enums\GenerationStatus;
 use App\Enums\ImageQuality;
 use App\Enums\ImageSize;
@@ -33,6 +34,15 @@ class GenerationFactory extends Factory
             'estimated_min_charge_nano' => Money::fromNano(58_175_000),
             'estimated_max_charge_nano' => Money::fromNano(86_325_000),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Generation $generation): void {
+            if ($generation->status->isTerminal() && $generation->completed_at !== null) {
+                app(RecordDailySpend::class)($generation);
+            }
+        });
     }
 
     public static function publishedRates(): TokenRates

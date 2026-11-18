@@ -37,6 +37,18 @@ it('formats exactly, without floats', function (int $nano, string $display) {
     [-10_000_000, '-$0.01'],
 ]);
 
+it('rounds to the nearest cent for headline figures, half away from zero', function (int $nano, string $cents) {
+    expect(Money::fromNano($nano)->formatCents())->toBe($cents);
+})->with([
+    [25_226_623_587_431, '$25,226.62'],
+    [4_999_999, '$0.00'],
+    [5_000_000, '$0.01'],
+    [994_999_999, '$0.99'],
+    [995_000_000, '$1.00'],
+    [-15_000_000, '-$0.02'],
+    [-1, '$0.00'],
+]);
+
 it('round-trips the decimal strings Pixelforge sends', function () {
     expect(Money::fromUsdString('12.50')->toDecimalString())->toBe('12.50')
         ->and(Money::fromUsdString('0.169080000')->toDecimalString())->toBe('0.16908');
@@ -81,5 +93,5 @@ it('refuses to mark up a negative amount', function () {
 
 it('serializes nanodollars as a string so browsers cannot round them', function () {
     expect(json_encode(Money::fromNano(467_343_750)))
-        ->toBe('{"nano":"467343750","display":"$0.46734375"}');
+        ->toBe('{"nano":"467343750","display":"$0.46734375","cents":"$0.47"}');
 });

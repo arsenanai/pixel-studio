@@ -93,7 +93,7 @@ it('allows a low quality generation to use no reasoning at all', function () {
 it('sends money as strings over the wire', function () {
     $json = json_decode((string) json_encode(docsExample()), true);
 
-    expect($json['charge']['max'])->toBe(['nano' => '467343750', 'display' => '$0.46734375'])
+    expect($json['charge']['max'])->toBe(['nano' => '467343750', 'display' => '$0.46734375', 'cents' => '$0.47'])
         ->and($json['charge']['min']['display'])->toBe('$0.35778125')
         ->and($json['markupPercent'])->toBe(25)
         ->and($json['lines'])->toHaveCount(4);

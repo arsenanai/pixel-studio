@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Generations;
 
+use App\Actions\Admin\RecordDailySpend;
 use App\Data\Pixelforge\PixelforgeGeneration;
 use App\Enums\CreditTransactionType;
 use App\Enums\GenerationStatus;
@@ -22,6 +23,7 @@ final readonly class ApplyGenerationUpdate
 {
     public function __construct(
         #[Config('billing.markup_basis_points')] private int $markupBasisPoints,
+        private RecordDailySpend $recordDailySpend,
     ) {}
 
     public function __invoke(Generation $generation, PixelforgeGeneration $snapshot): Generation
@@ -111,6 +113,7 @@ final readonly class ApplyGenerationUpdate
         $row->completed_at = $snapshot->completedAt;
 
         CreditTransaction::record($row->user_id, CreditTransactionType::Charge, Money::zero()->subtract($charge), $row->id);
+        ($this->recordDailySpend)($row);
 
         if ($charge->isGreaterThan($row->estimated_max_charge_nano)) {
             Log::warning('pixelforge.pricing.above_estimate', [
@@ -130,5 +133,7 @@ final readonly class ApplyGenerationUpdate
         $row->error_message = $message;
         $row->started_at ??= $startedAt;
         $row->completed_at = $completedAt;
+
+        ($this->recordDailySpend)($row);
     }
 }

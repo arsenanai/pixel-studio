@@ -29,6 +29,8 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'credits' => fn () => $user instanceof User ? ['available' => $user->availableCredits()] : null,
+            'locale' => app()->getLocale(),
+            'locales' => config()->array('app.locales'),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

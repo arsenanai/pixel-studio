@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property bool $is_admin
+ * @property string|null $locale
  */
 class User extends Authenticatable
 {
@@ -32,6 +33,7 @@ class User extends Authenticatable
 
     protected $attributes = [
         'is_admin' => false,
+        'locale' => null,
     ];
 
     protected $hidden = [

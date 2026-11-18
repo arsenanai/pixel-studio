@@ -13,6 +13,8 @@ export type PageProps<
         user: User;
     };
     credits: { available: import('./models').Money } | null;
+    locale: string;
+    locales: Record<string, string>;
     flash: {
         success: string | null;
         error: string | null;

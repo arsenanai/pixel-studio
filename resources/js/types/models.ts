@@ -1,6 +1,7 @@
 export interface Money {
     nano: string;
     display: string;
+    cents: string;
 }
 
 export interface Range<T> {
@@ -62,6 +63,22 @@ export interface Generation {
     completedAt: string | null;
 }
 
+export interface PageLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+export interface Page<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+    links: PageLink[];
+}
+
 export interface Paginated<T> {
     data: T[];
     links: {
@@ -74,6 +91,7 @@ export interface Paginated<T> {
         from: number | null;
         to: number | null;
         total: number;
+        links: PageLink[];
     };
 }
 

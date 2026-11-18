@@ -15,6 +15,8 @@ declare global {
 declare module 'vue' {
     interface ComponentCustomProperties {
         route: typeof ziggyRoute;
+        $t: typeof import('@/lib/i18n').t;
+        $tc: typeof import('@/lib/i18n').tc;
     }
 }
 

@@ -35,7 +35,7 @@ it('shows the estimate and the exact charge of a finished generation', function 
 
     history($user)
         ->where('generations.data.0.status', 'succeeded')
-        ->where('generations.data.0.charge', ['nano' => '381887500', 'display' => '$0.3818875'])
+        ->where('generations.data.0.charge', ['nano' => '381887500', 'display' => '$0.3818875', 'cents' => '$0.38'])
         ->where('generations.data.0.estimate.max.display', '$0.086325')
         ->where('hasPending', false)
         ->missing('generations.data.0.providerCost');
