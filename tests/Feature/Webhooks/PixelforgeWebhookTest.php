@@ -251,3 +251,24 @@ describe('duplicates and ordering', function () {
             ->and($generation->provider_job_id)->toBe('gen_01JC2Z8Q4N6V0M3H7X5T9R2B1K');
     });
 });
+
+it('prunes webhook events older than thirty days and keeps recent ones', function () {
+    $old = WebhookEvent::query()->forceCreate([
+        'provider_event_id' => 'evt_old',
+        'type' => 'ping',
+        'payload' => '{}',
+        'received_at' => CarbonImmutable::now()->subDays(31),
+    ]);
+    $recent = WebhookEvent::query()->forceCreate([
+        'provider_event_id' => 'evt_recent',
+        'type' => 'ping',
+        'payload' => '{}',
+        'received_at' => CarbonImmutable::now()->subDays(29),
+    ]);
+
+    $this->artisan('model:prune', ['--model' => [WebhookEvent::class]])->assertSuccessful();
+
+    expect(WebhookEvent::query()->pluck('provider_event_id')->all())->toBe(['evt_recent'])
+        ->and($old->exists)->toBeTrue()
+        ->and($recent->exists)->toBeTrue();
+});
